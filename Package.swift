@@ -30,6 +30,11 @@ let package = Package(
             name: "ClipPolishCoreTests",
             dependencies: ["ClipPolishCore"],
             path: "Tests/ClipPolishCoreTests"
+        ),
+        .testTarget(
+            name: "ClipPolishAppTests",
+            dependencies: ["ClipPolishApp", "ClipPolishCore"],
+            path: "Tests/ClipPolishAppTests"
         )
     ]
 )
