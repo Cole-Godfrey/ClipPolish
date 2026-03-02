@@ -1,0 +1,8 @@
+# id<TAB>regex<TAB>reason
+NETWORK_URLSESSION	\bURLSession\b	Network APIs are not allowed in manual cleanup paths.
+NETWORK_FRAMEWORK	\bimport\s+Network\b	`Network` framework usage violates local-only safety.
+NETWORK_ALAMOFIRE	\bAlamofire\b	Third-party networking is forbidden in cleanup flows.
+HISTORY_STORE_NAME	(?i)\bclipboard(history|store)\b	Clipboard history persistence is forbidden.
+HISTORY_PERSIST_NAME	(?i)\b(history|persist|archive).{0,40}clipboard\b	Clipboard history/archive semantics are forbidden.
+USERDEFAULTS_CLIPBOARD	(?i)\bUserDefaults\b.{0,120}\bclipboard(text)?\b	Clipboard text persistence in UserDefaults is forbidden.
+DISK_WRITE_CLIPBOARD	(?i)\b(write|store|save)\b.{0,120}\bclipboard(text)?\b.{0,120}\b(file|disk|path|url)\b	Clipboard text disk writes are forbidden.
