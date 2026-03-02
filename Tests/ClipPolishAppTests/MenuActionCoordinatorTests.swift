@@ -25,6 +25,23 @@ struct MenuActionCoordinatorTests {
     }
 
     @Test
+    func repeatedInvocationsMatchClickCountWithoutExtraRuns() {
+        let cleanupService = StubCleanupService(result: .alreadyClean)
+        let presenter = SpyStatusPresenter()
+        let coordinator = MenuActionCoordinator(
+            cleanupService: cleanupService,
+            statusPresenter: presenter
+        )
+
+        coordinator.runManualCleanup()
+        coordinator.runManualCleanup()
+        coordinator.runManualCleanup()
+
+        #expect(cleanupService.callCount == 3)
+        #expect(presenter.messages.count == 3)
+    }
+
+    @Test
     func nonTextPayloadShowsNoPlainTextWithoutWrite() {
         let gateway = MockClipboardGateway(
             payloadType: .nonText,
