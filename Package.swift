@@ -10,12 +10,21 @@ let package = Package(
         .library(
             name: "ClipPolishCore",
             targets: ["ClipPolishCore"]
+        ),
+        .executable(
+            name: "ClipPolishApp",
+            targets: ["ClipPolishApp"]
         )
     ],
     targets: [
         .target(
             name: "ClipPolishCore",
             path: "Sources/ClipPolishCore"
+        ),
+        .executableTarget(
+            name: "ClipPolishApp",
+            dependencies: ["ClipPolishCore"],
+            path: "Sources/ClipPolishApp"
         ),
         .testTarget(
             name: "ClipPolishCoreTests",
