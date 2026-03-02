@@ -1,0 +1,23 @@
+## Summary
+
+Describe what changed and why.
+
+## Type of change
+
+- [ ] Bug fix
+- [ ] Feature
+- [ ] Refactor
+- [ ] Documentation
+- [ ] CI/Build
+
+## Validation
+
+- [ ] `swift test`
+- [ ] `make verify-phase1-safety`
+- [ ] Added/updated tests for behavior changes
+
+## Checklist
+
+- [ ] Updated docs if behavior changed
+- [ ] Updated `CHANGELOG.md` for user-visible changes
+- [ ] Confirmed no network/history persistence behavior added to cleanup flow

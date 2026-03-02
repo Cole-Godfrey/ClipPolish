@@ -1,0 +1,12 @@
+# Local planning workspace
+.planning/
+
+# SwiftPM build output
+.build/
+
+# Xcode and macOS artifacts
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+.DS_Store

@@ -1,0 +1,44 @@
+name: Feature request
+description: Suggest an improvement
+labels:
+  - enhancement
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea.
+        Focus on user value, constraints, and safety impact.
+
+  - type: input
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem does this solve?
+      placeholder: Cleaning clipboard text manually is too slow for my workflow
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe your preferred approach.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternate approaches you considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: safety
+    attributes:
+      label: Privacy and safety impact
+      description: Describe effects on local-only behavior, persistence, and deterministic cleanup.
+    validations:
+      required: true
