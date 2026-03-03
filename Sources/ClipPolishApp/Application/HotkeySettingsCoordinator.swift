@@ -6,6 +6,17 @@ enum HotkeyShortcutUpdateOutcome: Equatable {
     case invalidShortcut
 }
 
+struct HotkeySettingsState: Equatable {
+    var isEnabled: Bool
+    var shortcut: KeyboardShortcuts.Shortcut?
+
+    var statusText: String {
+        let stateText = isEnabled ? "Enabled" : "Disabled"
+        let shortcutText = shortcut.map { "\($0)" } ?? "Not set"
+        return "Hotkey: \(stateText) (\(shortcutText))"
+    }
+}
+
 @MainActor
 final class HotkeySettingsCoordinator {
     private let store: HotkeyPreferencesStoring
@@ -30,6 +41,14 @@ final class HotkeySettingsCoordinator {
         )
     }
 
+    func currentSettings() -> HotkeySettingsState {
+        let preferences = store.load()
+        return HotkeySettingsState(
+            isEnabled: preferences.isEnabled,
+            shortcut: preferences.shortcut
+        )
+    }
+
     func setHotkeyEnabled(_ isEnabled: Bool) {
         if isEnabled {
             enableHotkey()
@@ -38,6 +57,14 @@ final class HotkeySettingsCoordinator {
 
         store.setHotkeyEnabled(false)
         hotkeyService.unregister()
+    }
+
+    func setShortcut(_ shortcut: KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome {
+        guard let shortcut else {
+            return .invalidShortcut
+        }
+
+        return setShortcut(shortcut)
     }
 
     func setShortcut(_ shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutUpdateOutcome {
