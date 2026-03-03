@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-03-03
+
 ### Added
 - Initial OSS project metadata and community files.
 - CI workflow for tests and safety checks.
@@ -14,9 +16,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Global hotkey settings controls in the menu bar, including persisted enabled state and shortcut.
 - Hotkey execution coordinator for clean-and-paste automation with single-flight execution protection.
 - Accessibility permission guidance and explicit request action for blocked hotkey automation.
-- Phase verification targets in `Makefile`:
-  - `verify-phase2-hotkey-controls`
-  - `verify-phase3-hotkey-execution`
+- Phase verification targets in `Makefile`: `verify-phase2-hotkey-controls` and `verify-phase3-hotkey-execution`.
 - App-level tests for hotkey settings, hotkey execution behavior, and permission guidance flows.
 
 ### Changed
