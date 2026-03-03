@@ -1,3 +1,4 @@
+import KeyboardShortcuts
 import Testing
 @testable import ClipPolishApp
 
@@ -26,6 +27,59 @@ struct MenuBarActionTests {
 
         #expect(recorder.invocationCount == 2)
     }
+
+    @Test
+    func hotkeyToggleCommandInvokesHandlerWithProvidedValue() {
+        let recorder = HotkeySettingsRecorder()
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            setHotkeyEnabled: { value in
+                recorder.enabledValues.append(value)
+            }
+        )
+
+        action.hotkeyEnabledChanged(true)
+        action.hotkeyEnabledChanged(false)
+
+        #expect(recorder.enabledValues == [true, false])
+    }
+
+    @Test
+    func hotkeyShortcutCommandReturnsConfiguredOutcome() {
+        let recorder = HotkeySettingsRecorder()
+        let expectedShortcut = KeyboardShortcuts.Shortcut(.k, modifiers: [.command, .option])
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            setHotkeyShortcut: { shortcut in
+                recorder.shortcuts.append(shortcut)
+                return .blockedConflict(
+                    suggestions: [
+                        "Try Command-Shift-Option-V"
+                    ]
+                )
+            }
+        )
+
+        let outcome = action.hotkeyShortcutChanged(expectedShortcut)
+
+        #expect(
+            outcome == .blockedConflict(
+                suggestions: [
+                    "Try Command-Shift-Option-V"
+                ]
+            )
+        )
+        #expect(recorder.shortcuts == [expectedShortcut])
+    }
+
+    @Test
+    func defaultShortcutHandlerRejectsMissingShortcut() {
+        let action = MenuBarAction(runManualCleanup: {})
+
+        let outcome = action.hotkeyShortcutChanged(nil)
+
+        #expect(outcome == .invalidShortcut)
+    }
 }
 
 private final class InvocationRecorder: @unchecked Sendable {
@@ -34,4 +88,9 @@ private final class InvocationRecorder: @unchecked Sendable {
     func record() {
         invocationCount += 1
     }
+}
+
+private final class HotkeySettingsRecorder: @unchecked Sendable {
+    var enabledValues: [Bool] = []
+    var shortcuts: [KeyboardShortcuts.Shortcut?] = []
 }

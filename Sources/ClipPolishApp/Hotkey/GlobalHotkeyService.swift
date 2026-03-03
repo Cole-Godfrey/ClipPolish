@@ -1,0 +1,60 @@
+import Foundation
+import KeyboardShortcuts
+
+@MainActor
+protocol GlobalHotkeyServing: Sendable {
+    var selectedShortcut: KeyboardShortcuts.Shortcut? { get }
+    func register(shortcut: KeyboardShortcuts.Shortcut)
+    func unregister()
+    func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?)
+    func validate(shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutValidationResult
+}
+
+enum HotkeyShortcutValidationResult: Equatable {
+    case accepted
+    case blockedConflict(suggestions: [String])
+    case invalidShortcut
+}
+
+enum HotkeyShortcutName {
+    static let cleanAndPaste = KeyboardShortcuts.Name("cleanAndPaste")
+}
+
+@MainActor
+final class GlobalHotkeyService: GlobalHotkeyServing {
+    private let name: KeyboardShortcuts.Name
+
+    init(name: KeyboardShortcuts.Name = HotkeyShortcutName.cleanAndPaste) {
+        self.name = name
+    }
+
+    var selectedShortcut: KeyboardShortcuts.Shortcut? {
+        KeyboardShortcuts.getShortcut(for: name)
+    }
+
+    func register(shortcut: KeyboardShortcuts.Shortcut) {
+        KeyboardShortcuts.setShortcut(shortcut, for: name)
+        KeyboardShortcuts.enable(name)
+    }
+
+    func unregister() {
+        KeyboardShortcuts.disable(name)
+    }
+
+    func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?) {
+        guard isEnabled, let shortcut else {
+            unregister()
+            return
+        }
+
+        register(shortcut: shortcut)
+    }
+
+    func validate(shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutValidationResult {
+        guard !shortcut.modifiers.isEmpty else {
+            return .invalidShortcut
+        }
+
+        return .accepted
+    }
+}
