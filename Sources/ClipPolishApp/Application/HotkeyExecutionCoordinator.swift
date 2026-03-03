@@ -4,10 +4,13 @@ import Foundation
 
 @MainActor
 final class HotkeyExecutionCoordinator {
+    private static let accessibilitySettingsURLString = "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
     private let cleanupService: any ClipboardCleanupServing
     private let permissionService: any AutomationPermissionServing
     private let pastePoster: any PasteEventPosting
     private let statusPresenter: any StatusMessagePresenting
+    private let accessibilitySettingsOpener: @MainActor () -> Void
     private let frontmostApplicationPIDProvider: @MainActor @Sendable () -> pid_t?
     private var activeExecution: Task<Void, Never>?
 
@@ -16,6 +19,12 @@ final class HotkeyExecutionCoordinator {
         permissionService: any AutomationPermissionServing,
         pastePoster: any PasteEventPosting,
         statusPresenter: any StatusMessagePresenting,
+        accessibilitySettingsOpener: @escaping @MainActor () -> Void = {
+            guard let settingsURL = URL(string: HotkeyExecutionCoordinator.accessibilitySettingsURLString) else {
+                return
+            }
+            NSWorkspace.shared.open(settingsURL)
+        },
         frontmostApplicationPIDProvider: @escaping @MainActor @Sendable () -> pid_t? = {
             NSWorkspace.shared.frontmostApplication?.processIdentifier
         }
@@ -24,6 +33,7 @@ final class HotkeyExecutionCoordinator {
         self.permissionService = permissionService
         self.pastePoster = pastePoster
         self.statusPresenter = statusPresenter
+        self.accessibilitySettingsOpener = accessibilitySettingsOpener
         self.frontmostApplicationPIDProvider = frontmostApplicationPIDProvider
     }
 
@@ -33,9 +43,11 @@ final class HotkeyExecutionCoordinator {
         }
 
         let targetPID = frontmostApplicationPIDProvider()
-        guard permissionService.preflightPostEventAccess() else {
-            statusPresenter.show(.automationPermissionRequired)
-            return
+        if !permissionService.preflightPostEventAccess() {
+            guard permissionService.requestPostEventAccess() else {
+                statusPresenter.show(.automationPermissionRequired)
+                return
+            }
         }
 
         activeExecution = Task { @MainActor [self, targetPID] in
@@ -63,6 +75,15 @@ final class HotkeyExecutionCoordinator {
 
         let granted = permissionService.requestPostEventAccess()
         statusPresenter.show(granted ? .automationPermissionGranted : .automationPermissionRequestDenied)
+        guard !granted else {
+            return
+        }
+
+        openAccessibilitySettings()
+    }
+
+    func openAccessibilitySettings() {
+        accessibilitySettingsOpener()
     }
 
     private static func shouldPostPaste(for cleanupResult: CleanupResult) -> Bool {

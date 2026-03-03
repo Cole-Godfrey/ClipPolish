@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+APP_PATH="/Applications/ClipPolish.app"
+ACCESSIBILITY_URL="x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
+console_user="$(stat -f '%Su' /dev/console || true)"
+if [[ -z "$console_user" || "$console_user" == "root" || "$console_user" == "loginwindow" ]]; then
+  exit 0
+fi
+
+console_uid="$(id -u "$console_user")"
+
+launchctl asuser "$console_uid" /usr/bin/open -a "$APP_PATH" || true
+launchctl asuser "$console_uid" /usr/bin/open "$ACCESSIBILITY_URL" || true
+
+launchctl asuser "$console_uid" /usr/bin/osascript <<'APPLESCRIPT' || true
+display dialog "ClipPolish was installed. Enable ClipPolish in Accessibility settings to allow hotkey clean-and-paste." buttons {"OK"} default button "OK" with title "ClipPolish Setup"
+APPLESCRIPT
+
+exit 0

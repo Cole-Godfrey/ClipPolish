@@ -18,6 +18,11 @@ final class StatusPresenter: ObservableObject, StatusMessagePresenting {
     func show(_ message: StatusMessage) {
         currentMessage = message
         clearTask?.cancel()
+
+        guard message.shouldAutoDismiss else {
+            return
+        }
+
         clearTask = Task { @MainActor [weak self, displayDurationNanoseconds] in
             try? await Task.sleep(nanoseconds: displayDurationNanoseconds)
             guard let self, !Task.isCancelled else {

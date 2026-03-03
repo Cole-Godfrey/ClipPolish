@@ -32,41 +32,57 @@ git push origin vX.Y.Z
 2. Paste release notes from the corresponding `CHANGELOG.md` section.
 3. Attach build artifacts if distributing binaries.
 
-## 4. (Optional) Signed and Notarized macOS App Build
+## 4. Build Installer Artifact
 
-If shipping `.app` artifacts, use this high-level sequence:
-
-1. Build release app bundle.
-2. Sign with Developer ID Application certificate:
+Use the installer pipeline to create a `.pkg` that installs `ClipPolish.app` into `/Applications`:
 
 ```bash
-codesign --deep --force --options runtime \
-  --sign "Developer ID Application: <Team or Name>" \
-  /path/to/ClipPolish.app
+make build-release-installer
 ```
 
-3. Submit for notarization:
+Optional signing env vars:
+
+- `CLIPPOLISH_APP_SIGN_IDENTITY` for app bundle signing (Developer ID Application).
+- `CLIPPOLISH_PKG_SIGN_IDENTITY` for installer signing (Developer ID Installer).
+
+Output: `dist/ClipPolish-<version>.pkg`
+
+GitHub releases can attach this artifact automatically via `.github/workflows/release-installer.yml`.
+
+Installer behavior:
+
+- Installs app into `/Applications`.
+- Opens the macOS Accessibility pane after install.
+- Shows a prompt reminding the user to enable ClipPolish manually.
+
+Note: macOS does not allow normal third-party installers to auto-enable Accessibility permission.
+
+## 5. (Optional) Notarize Installer
+
+If shipping signed release artifacts, notarize your installer package:
+
+1. Submit for notarization:
 
 ```bash
-xcrun notarytool submit /path/to/ClipPolish.zip \
+xcrun notarytool submit /path/to/ClipPolish.pkg \
   --keychain-profile "<notary-profile>" \
   --wait
 ```
 
-4. Staple ticket:
+2. Staple ticket:
 
 ```bash
-xcrun stapler staple /path/to/ClipPolish.app
+xcrun stapler staple /path/to/ClipPolish.pkg
 ```
 
-5. Verify:
+3. Verify:
 
 ```bash
-spctl --assess --verbose=4 /path/to/ClipPolish.app
-codesign --verify --deep --strict --verbose=2 /path/to/ClipPolish.app
+spctl --assess --type install --verbose=4 /path/to/ClipPolish.pkg
+pkgutil --check-signature /path/to/ClipPolish.pkg
 ```
 
-## 5. Post-Release
+## 6. Post-Release
 
 - Move next changes into `Unreleased` in `CHANGELOG.md`.
 - Bump internal build version if needed.

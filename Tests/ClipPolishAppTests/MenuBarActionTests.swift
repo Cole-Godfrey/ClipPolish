@@ -95,6 +95,21 @@ struct MenuBarActionTests {
 
         #expect(recorder.invocationCount == 1)
     }
+
+    @Test
+    func openAccessibilitySettingsCommandInvokesHandlerOnce() {
+        let recorder = InvocationRecorder()
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            openAccessibilitySettings: {
+                recorder.record()
+            }
+        )
+
+        action.openAccessibilitySettingsSelected()
+
+        #expect(recorder.invocationCount == 1)
+    }
 }
 
 private final class InvocationRecorder: @unchecked Sendable {

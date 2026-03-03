@@ -14,11 +14,13 @@ struct HotkeyPermissionGuidanceTests {
         )
         let pastePoster = GuidanceSpyPasteEventPoster()
         let statusPresenter = GuidanceSpyStatusPresenter()
+        let settingsOpener = GuidanceSpySettingsOpener()
         let coordinator = HotkeyExecutionCoordinator(
             cleanupService: cleanupService,
             permissionService: permissionService,
             pastePoster: pastePoster,
             statusPresenter: statusPresenter,
+            accessibilitySettingsOpener: settingsOpener.open,
             frontmostApplicationPIDProvider: { 1337 }
         )
 
@@ -26,7 +28,9 @@ struct HotkeyPermissionGuidanceTests {
         await drainMainActorQueue()
 
         #expect(cleanupService.callCount == 0)
+        #expect(permissionService.requestCallCount == 1)
         #expect(pastePoster.postedPIDs.isEmpty)
+        #expect(settingsOpener.openCallCount == 0)
         #expect(statusPresenter.messages == [.automationPermissionRequired])
         #expect(
             statusPresenter.messages.last?.permissionGuidance?.settingsPath
@@ -35,6 +39,14 @@ struct HotkeyPermissionGuidanceTests {
         #expect(
             statusPresenter.messages.last?.permissionGuidance?.actionTitle
                 == "Request Accessibility Permission"
+        )
+        #expect(
+            statusPresenter.messages.last?.permissionGuidance?.manualSteps
+                == [
+                    "Open Accessibility settings.",
+                    "Enable ClipPolish in the app list.",
+                    "Return to your app and press the hotkey again."
+                ]
         )
     }
 
@@ -47,11 +59,13 @@ struct HotkeyPermissionGuidanceTests {
         )
         let pastePoster = GuidanceSpyPasteEventPoster()
         let statusPresenter = GuidanceSpyStatusPresenter()
+        let settingsOpener = GuidanceSpySettingsOpener()
         let coordinator = HotkeyExecutionCoordinator(
             cleanupService: cleanupService,
             permissionService: permissionService,
             pastePoster: pastePoster,
             statusPresenter: statusPresenter,
+            accessibilitySettingsOpener: settingsOpener.open,
             frontmostApplicationPIDProvider: { 10 }
         )
 
@@ -61,6 +75,7 @@ struct HotkeyPermissionGuidanceTests {
         #expect(permissionService.requestCallCount == 1)
         #expect(cleanupService.callCount == 0)
         #expect(pastePoster.postedPIDs.isEmpty)
+        #expect(settingsOpener.openCallCount == 1)
         #expect(statusPresenter.messages == [.automationPermissionRequestDenied])
     }
 
@@ -73,11 +88,13 @@ struct HotkeyPermissionGuidanceTests {
         )
         let pastePoster = GuidanceSpyPasteEventPoster()
         let statusPresenter = GuidanceSpyStatusPresenter()
+        let settingsOpener = GuidanceSpySettingsOpener()
         let coordinator = HotkeyExecutionCoordinator(
             cleanupService: cleanupService,
             permissionService: permissionService,
             pastePoster: pastePoster,
             statusPresenter: statusPresenter,
+            accessibilitySettingsOpener: settingsOpener.open,
             frontmostApplicationPIDProvider: { 10 }
         )
 
@@ -87,6 +104,7 @@ struct HotkeyPermissionGuidanceTests {
         #expect(permissionService.requestCallCount == 1)
         #expect(cleanupService.callCount == 0)
         #expect(pastePoster.postedPIDs.isEmpty)
+        #expect(settingsOpener.openCallCount == 0)
         #expect(statusPresenter.messages == [.automationPermissionGranted])
     }
 
@@ -99,11 +117,13 @@ struct HotkeyPermissionGuidanceTests {
         )
         let pastePoster = GuidanceSpyPasteEventPoster()
         let statusPresenter = GuidanceSpyStatusPresenter()
+        let settingsOpener = GuidanceSpySettingsOpener()
         let coordinator = HotkeyExecutionCoordinator(
             cleanupService: cleanupService,
             permissionService: permissionService,
             pastePoster: pastePoster,
             statusPresenter: statusPresenter,
+            accessibilitySettingsOpener: settingsOpener.open,
             frontmostApplicationPIDProvider: { 5 }
         )
 
@@ -112,6 +132,7 @@ struct HotkeyPermissionGuidanceTests {
 
         #expect(cleanupService.callCount == 0)
         #expect(pastePoster.postedPIDs.isEmpty)
+        #expect(settingsOpener.openCallCount == 1)
         #expect(
             statusPresenter.messages.last?.permissionGuidance?.settingsPath
                 == "System Settings -> Privacy & Security -> Accessibility"
@@ -168,6 +189,15 @@ private final class GuidanceSpyPasteEventPoster: PasteEventPosting, @unchecked S
 
     func postPaste(targetPID: pid_t?) {
         postedPIDs.append(targetPID)
+    }
+}
+
+@MainActor
+private final class GuidanceSpySettingsOpener {
+    private(set) var openCallCount: Int = 0
+
+    func open() {
+        openCallCount += 1
     }
 }
 
