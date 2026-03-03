@@ -10,7 +10,9 @@ struct MenuBarAction {
     init(
         runManualCleanup: @escaping () -> Void,
         setHotkeyEnabled: @escaping (Bool) -> Void = { _ in },
-        setHotkeyShortcut: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome = { _ in .accepted }
+        setHotkeyShortcut: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome = { shortcut in
+            shortcut == nil ? .invalidShortcut : .accepted
+        }
     ) {
         self.runManualCleanup = runManualCleanup
         self.setHotkeyEnabled = setHotkeyEnabled
