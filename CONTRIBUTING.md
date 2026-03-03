@@ -16,7 +16,7 @@ swift test
 4. Run safety verification before opening a PR:
 
 ```bash
-make verify-phase1-safety
+make verify-phase3-hotkey-execution
 ```
 
 ## Pull Request Guidelines
@@ -30,6 +30,9 @@ make verify-phase1-safety
 ## Code Quality Expectations
 
 - Preserve conservative cleanup behavior unless there is explicit discussion and agreement.
+- Preserve hotkey safety boundaries:
+  - Do not bypass Accessibility permission checks for synthetic paste events.
+  - Keep hotkey execution single-flight to avoid re-entrant duplicate actions.
 - Do not introduce clipboard history persistence.
 - Do not add network calls to clipboard cleanup paths.
 - Prefer deterministic, testable behavior.

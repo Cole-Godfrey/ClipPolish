@@ -9,7 +9,7 @@ This document describes the release process for ClipPolish.
 
 ```bash
 swift test
-make verify-phase1-safety
+make verify-phase3-hotkey-execution
 ```
 
 3. Update release metadata:
