@@ -13,7 +13,7 @@ Describe what changed and why.
 ## Validation
 
 - [ ] `swift test`
-- [ ] `make verify-phase1-safety`
+- [ ] `make verify-phase3-hotkey-execution`
 - [ ] Added/updated tests for behavior changes
 
 ## Checklist
