@@ -32,12 +32,11 @@ make verify-phase3-hotkey-execution
 - Update docs when behavior or workflows change.
 - Update `CHANGELOG.md` in the `Unreleased` section for user-visible changes.
 - Ensure CI passes.
-- If your PR changes installer/release scripts, validate shell syntax:
+- If your PR changes install/release scripts, validate shell syntax:
 
 ```bash
-bash -n scripts/build-release-installer.sh
+bash -n scripts/install-app.sh
 bash -n scripts/install-dev-app.sh
-bash -n packaging/macos/scripts/postinstall
 ```
 
 ## Code Quality Expectations

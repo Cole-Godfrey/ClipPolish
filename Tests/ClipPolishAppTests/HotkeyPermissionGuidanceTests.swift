@@ -45,6 +45,7 @@ struct HotkeyPermissionGuidanceTests {
                 == [
                     "Open Accessibility settings.",
                     "Enable ClipPolish in the app list.",
+                    "Quit and relaunch ClipPolish.",
                     "Return to your app and press the hotkey again."
                 ]
         )

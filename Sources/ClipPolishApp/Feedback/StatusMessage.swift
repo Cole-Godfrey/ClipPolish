@@ -42,6 +42,7 @@ enum StatusMessage: Equatable, Sendable {
                 manualSteps: [
                     "Open Accessibility settings.",
                     "Enable ClipPolish in the app list.",
+                    "Quit and relaunch ClipPolish.",
                     "Return to your app and press the hotkey again."
                 ]
             )
@@ -54,7 +55,8 @@ enum StatusMessage: Equatable, Sendable {
                 manualSteps: [
                     "Open Accessibility settings.",
                     "Enable ClipPolish in the app list.",
-                    "If ClipPolish is missing, quit and relaunch ClipPolish and request again."
+                    "Quit and relaunch ClipPolish.",
+                    "If ClipPolish is still missing, request permission again."
                 ]
             )
         case .noPlainText, .alreadyClean, .cleaned, .clipboardReadFailed, .clipboardWriteFailed, .automationPermissionGranted:

@@ -1,4 +1,4 @@
-.PHONY: verify-phase1-safety verify-phase2-hotkey-controls verify-phase3-hotkey-execution build-release-installer
+.PHONY: verify-phase1-safety verify-phase2-hotkey-controls verify-phase3-hotkey-execution install-app
 
 verify-phase1-safety:
 	swift test --filter ClipboardNoOpSafetyTests
@@ -16,5 +16,5 @@ verify-phase3-hotkey-execution:
 	swift test --filter HotkeyPermissionGuidanceTests
 	$(MAKE) verify-phase2-hotkey-controls
 
-build-release-installer:
-	bash scripts/build-release-installer.sh
+install-app:
+	bash scripts/install-app.sh

@@ -30,68 +30,22 @@ git push origin vX.Y.Z
 
 1. Create a GitHub Release from tag `vX.Y.Z`.
 2. Paste release notes from the corresponding `CHANGELOG.md` section.
-3. Verify the `Release Installer` workflow succeeds and attaches `ClipPolish-<version>.pkg`.
+3. Confirm the release notes include source install instructions (`bash scripts/install-app.sh`).
 
-## 4. Build Installer Artifact
+## 4. Validate Source Install Flow
 
-Use the installer pipeline to create a `.pkg` that installs `ClipPolish.app` into `/Applications`:
-
-```bash
-make build-release-installer
-```
-
-Or run directly with explicit version/build values:
+From a clean checkout of the release tag, verify the recommended install flow:
 
 ```bash
-bash scripts/build-release-installer.sh X.Y.Z <build-number>
+bash scripts/install-app.sh --no-run
 ```
 
-Optional signing env vars:
+Expected output app bundle:
 
-- `CLIPPOLISH_APP_SIGN_IDENTITY` for app bundle signing (Developer ID Application).
-- `CLIPPOLISH_PKG_SIGN_IDENTITY` for installer signing (Developer ID Installer).
+- `~/Applications/ClipPolish.app` (default)
+- `/Applications/ClipPolish.app` when using `--system-applications`
 
-Output: `dist/ClipPolish-<version>.pkg`
-
-GitHub releases can attach this artifact automatically via `.github/workflows/release-installer.yml`.
-For `release` events, the workflow fails fast unless repository secrets are configured:
-- `CLIPPOLISH_APP_SIGN_IDENTITY`
-- `CLIPPOLISH_PKG_SIGN_IDENTITY`
-
-Installer behavior:
-
-- Installs app into `/Applications`.
-- Opens the macOS Accessibility pane after install.
-- Shows a prompt reminding the user to enable ClipPolish manually.
-
-Note: macOS does not allow normal third-party installers to auto-enable Accessibility permission.
-
-## 5. (Optional) Notarize Installer
-
-If shipping signed release artifacts, notarize your installer package:
-
-1. Submit for notarization:
-
-```bash
-xcrun notarytool submit /path/to/ClipPolish.pkg \
-  --keychain-profile "<notary-profile>" \
-  --wait
-```
-
-2. Staple ticket:
-
-```bash
-xcrun stapler staple /path/to/ClipPolish.pkg
-```
-
-3. Verify:
-
-```bash
-spctl --assess --type install --verbose=4 /path/to/ClipPolish.pkg
-pkgutil --check-signature /path/to/ClipPolish.pkg
-```
-
-## 6. Post-Release
+## 5. Post-Release
 
 - Move next changes into `Unreleased` in `CHANGELOG.md`.
 - Bump internal build version if needed.

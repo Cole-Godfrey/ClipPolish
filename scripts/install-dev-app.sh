@@ -22,7 +22,8 @@ done
 
 APP_PATH="${CLIPPOLISH_DEV_APP_PATH:-$HOME/Applications/ClipPolish Dev.app}"
 BUNDLE_ID="${CLIPPOLISH_DEV_BUNDLE_ID:-com.clippolish.dev}"
-APP_VERSION="${CLIPPOLISH_DEV_APP_VERSION:-1.0.0}"
+APP_DISPLAY_NAME="${CLIPPOLISH_DEV_APP_DISPLAY_NAME:-ClipPolish Dev}"
+APP_VERSION="${CLIPPOLISH_DEV_APP_VERSION:-1.0.1}"
 BUILD_VERSION="${CLIPPOLISH_DEV_BUILD_VERSION:-1}"
 
 cd "$ROOT"
@@ -55,7 +56,7 @@ cat > "$APP_PATH/Contents/Info.plist" <<PLIST
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>ClipPolish Dev</string>
+  <string>${APP_DISPLAY_NAME}</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

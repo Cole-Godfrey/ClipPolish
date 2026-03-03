@@ -7,18 +7,25 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+- Accessibility setup docs and in-app permission guidance now explicitly require quitting and re-opening ClipPolish after enabling Accessibility before hotkey clean-and-paste works.
+- Project version references and bundle metadata now reflect `1.0.1`.
+
+## [1.0.1] - 2026-03-03
+
 ### Added
-- Release installer pipeline (`make build-release-installer`) that builds `dist/ClipPolish-<version>.pkg` and installs `ClipPolish.app` into `/Applications`.
-- GitHub release installer workflow that builds and attaches `.pkg` artifacts to published releases.
-- Release workflow signing gate for `CLIPPOLISH_APP_SIGN_IDENTITY` and `CLIPPOLISH_PKG_SIGN_IDENTITY` secrets.
+- Source installer helper (`scripts/install-app.sh`) that builds and installs a local app bundle without `.pkg` packaging.
 - Dev app installer helper (`scripts/install-dev-app.sh`) for a stable local app identity in Accessibility settings.
-- Installer post-install flow that opens macOS Accessibility settings and provides a manual permission prompt.
 - Regression coverage for mixed-format clipboard payload sanitation and permission-status presentation behavior.
 
 ### Changed
 - Hotkey permission guidance now includes explicit manual steps and an `Open Accessibility Settings` action.
 - Permission-required and permission-denied status messages now remain visible until replaced.
 - Accessibility guidance copy in the menu now reflects shipped behavior instead of phase-based wording.
+- Documentation and release process now use source-first app installation (`bash scripts/install-app.sh`).
+
+### Removed
+- `.pkg` release installer workflow and related installer packaging guidance.
 
 ### Fixed
 - Mixed-format clipboard payloads containing plain text are no longer misclassified as non-text.

@@ -15,7 +15,7 @@ Describe what changed and why.
 - [ ] `swift test`
 - [ ] `make verify-phase3-hotkey-execution`
 - [ ] Added/updated tests for behavior changes
-- [ ] If installer/release scripts changed: `bash -n scripts/build-release-installer.sh`, `bash -n scripts/install-dev-app.sh`, `bash -n packaging/macos/scripts/postinstall`
+- [ ] If install/release scripts changed: `bash -n scripts/install-app.sh`, `bash -n scripts/install-dev-app.sh`
 
 ## Checklist
 

@@ -15,5 +15,5 @@ Those breaking changes still needed to be clearly documented in `CHANGELOG.md`.
 
 ## Tagging
 
-- Release tags use `vMAJOR.MINOR.PATCH` (example: `v1.0.0`).
+- Release tags use `vMAJOR.MINOR.PATCH` (example: `v1.0.1`).
 - Every release tag must have a matching changelog entry.

@@ -4,9 +4,75 @@ ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text
 
 The current behavior is intentionally conservative: trim only leading/trailing whitespace and remove a small denylist of invisible Unicode scalars that commonly break pastes or tooling.
 
+## Recommended Installation (Local Build)
+
+ClipPolish is installed from source using the local app installer script. This avoids unsigned `.pkg` distribution issues and gives a stable app path for Accessibility permission.
+
+Requirements:
+- macOS 13+
+- Xcode 15+ or Swift 5.9+
+
+Install steps:
+
+1. Clone this repository.
+2. Run:
+
+```bash
+bash scripts/install-app.sh
+```
+
+3. Launch `ClipPolish.app` from `~/Applications`.
+4. Confirm the menu bar icon appears.
+5. In the menu bar app, enable `Enable Global Hotkey` (default shortcut: `Command` + `Shift` + `Option` + `V`).
+
+Default install location: `~/Applications/ClipPolish.app`
+
+Optional install commands:
+
+```bash
+# Install into /Applications (may require sudo)
+bash scripts/install-app.sh --system-applications
+
+# Build a debug app bundle and do not auto-launch
+bash scripts/install-app.sh debug --no-run
+```
+
+## Required Setup: Accessibility Permission (For Hotkey)
+
+Hotkey clean-and-paste requires macOS Accessibility permission. Without it, the global hotkey cannot post the paste event.
+
+ClipPolish helps with setup:
+- If permission is still missing, ClipPolish shows in-app guidance.
+- You can use `Request Accessibility Permission`.
+- You can use `Open Accessibility Settings`.
+
+Complete these steps:
+
+1. Open `System Settings -> Privacy & Security -> Accessibility`.
+2. Enable `ClipPolish`.
+3. If prompted, authenticate and confirm.
+4. Quit and re-open ClipPolish so macOS reloads the new permission state.
+5. Return to the target app and press the ClipPolish hotkey again.
+
+If `ClipPolish` is not listed in Accessibility:
+
+1. Quit ClipPolish.
+2. Re-open the installed app bundle (`~/Applications/ClipPolish.app` by default).
+3. Trigger the hotkey once, or click `Request Accessibility Permission`.
+4. Re-check `System Settings -> Privacy & Security -> Accessibility` and enable `ClipPolish`.
+
+Hotkey verification checklist:
+
+1. Copy text with leading/trailing spaces in any text app.
+2. Place the cursor in an input field.
+3. Press the configured ClipPolish hotkey.
+4. Confirm sanitized text is pasted.
+
+Note: manual `Clean Clipboard Text` does not require Accessibility; only hotkey clean-and-paste does.
+
 ## Status
 
-ClipPolish is at `1.0.0` and currently ships both manual cleanup and global hotkey clean-and-paste workflows.
+ClipPolish is at `1.0.1` and currently ships both manual cleanup and global hotkey clean-and-paste workflows.
 
 Implemented:
 - Menu bar action: `Clean Clipboard Text`
@@ -20,20 +86,19 @@ Implemented:
 - Non-text clipboard payloads are left untouched
 - Local-only processing (no network calls, no clipboard history persistence)
 
-## Requirements
+## Development Setup
 
-- macOS 13+
-- Xcode 15+ or Swift 5.9+
+Additional development requirement:
 - `ripgrep` (`rg`) for safety verification script
 
-## Build and Run
+Build and run:
 
 ```bash
 swift build
 swift run ClipPolishApp
 ```
 
-For Accessibility permission testing on macOS, prefer installing and running the dev app bundle:
+For hotkey and Accessibility testing during development, prefer the dedicated dev app bundle:
 
 ```bash
 bash scripts/install-dev-app.sh
@@ -45,26 +110,12 @@ Optional flags:
 bash scripts/install-dev-app.sh [debug|release] [--no-run]
 ```
 
-This installs `~/Applications/ClipPolish Dev.app`, which gives a stable app path for Accessibility settings.
+This installs `~/Applications/ClipPolish Dev.app`, which provides a stable app path for Accessibility settings.
 For hotkey testing, use the installed app bundle instead of `swift run`.
 
-## Release Installer
+## Release Distribution
 
-To produce a release installer package that installs the app into `/Applications`:
-
-```bash
-make build-release-installer
-```
-
-Artifact output: `dist/ClipPolish-<version>.pkg`.
-
-macOS privacy policy does not allow installers to auto-enable Accessibility for normal consumer installs.
-ClipPolish installer opens the Accessibility pane and prompts the user to enable ClipPolish manually.
-
-On GitHub release publish, `.github/workflows/release-installer.yml` builds and attaches the `.pkg`.
-For signed release uploads, configure repository secrets:
-- `CLIPPOLISH_APP_SIGN_IDENTITY`
-- `CLIPPOLISH_PKG_SIGN_IDENTITY`
+ClipPolish releases are source-first. Users install from source with `bash scripts/install-app.sh`.
 
 ## Test and Verify
 
@@ -73,12 +124,11 @@ swift test
 make verify-phase3-hotkey-execution
 ```
 
-When changing installer packaging or release automation, also validate:
+When changing install scripts, also validate:
 
 ```bash
-bash -n scripts/build-release-installer.sh
+bash -n scripts/install-app.sh
 bash -n scripts/install-dev-app.sh
-bash -n packaging/macos/scripts/postinstall
 ```
 
 ## Safety Model
