@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+APP_PATH="/Applications/ClipPolish.app"
+ACCESSIBILITY_URL="x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
+warn() {
+  local message="$1"
+  echo "ClipPolish installer warning: $message" >&2
+  /usr/bin/logger -t "ClipPolishInstaller" "$message" >/dev/null 2>&1 || true
+}
+
+run_as_console_user_non_blocking() {
+  local description="$1"
+  shift
+
+  if ! launchctl asuser "$console_uid" "$@"; then
+    warn "$description"
+  fi
+}
+
+console_user="$(stat -f '%Su' /dev/console || true)"
+if [[ -z "$console_user" || "$console_user" == "root" || "$console_user" == "loginwindow" ]]; then
+  exit 0
+fi
+
+console_uid="$(id -u "$console_user")"
+
+run_as_console_user_non_blocking \
+  "failed to open ClipPolish.app after install" \
+  /usr/bin/open -a "$APP_PATH"
+
+run_as_console_user_non_blocking \
+  "failed to open Accessibility settings after install" \
+  /usr/bin/open "$ACCESSIBILITY_URL"
+
+run_as_console_user_non_blocking \
+  "failed to display post-install accessibility guidance dialog" \
+  /usr/bin/osascript -e 'display dialog "ClipPolish was installed. Enable ClipPolish in Accessibility settings to allow hotkey clean-and-paste." buttons {"OK"} default button "OK" with title "ClipPolish Setup"'
+
+exit 0

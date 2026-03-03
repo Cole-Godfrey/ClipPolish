@@ -56,6 +56,9 @@ struct ClipPolishApp: App {
             },
             onRequestAutomationPermission: {
                 hotkeyExecutionCoordinator.requestAutomationPermissionIfNeeded()
+            },
+            onOpenAccessibilitySettings: {
+                hotkeyExecutionCoordinator.openAccessibilitySettings()
             }
         )
     }

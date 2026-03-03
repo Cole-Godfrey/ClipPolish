@@ -7,6 +7,7 @@ struct MenuBarAction {
     private let setHotkeyEnabled: (Bool) -> Void
     private let setHotkeyShortcut: (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome
     private let requestAutomationPermission: () -> Void
+    private let openAccessibilitySettings: () -> Void
 
     init(
         runManualCleanup: @escaping () -> Void,
@@ -14,12 +15,14 @@ struct MenuBarAction {
         setHotkeyShortcut: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome = { shortcut in
             shortcut == nil ? .invalidShortcut : .accepted
         },
-        requestAutomationPermission: @escaping () -> Void = {}
+        requestAutomationPermission: @escaping () -> Void = {},
+        openAccessibilitySettings: @escaping () -> Void = {}
     ) {
         self.runManualCleanup = runManualCleanup
         self.setHotkeyEnabled = setHotkeyEnabled
         self.setHotkeyShortcut = setHotkeyShortcut
         self.requestAutomationPermission = requestAutomationPermission
+        self.openAccessibilitySettings = openAccessibilitySettings
     }
 
     func cleanClipboardTextSelected() {
@@ -37,6 +40,10 @@ struct MenuBarAction {
     func requestAutomationPermissionSelected() {
         requestAutomationPermission()
     }
+
+    func openAccessibilitySettingsSelected() {
+        openAccessibilitySettings()
+    }
 }
 
 struct MenuBarScene: Scene {
@@ -51,7 +58,8 @@ struct MenuBarScene: Scene {
         onCleanClipboardText: @escaping () -> Void,
         onHotkeyEnabledChanged: @escaping (Bool) -> Void,
         onHotkeyShortcutChanged: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome,
-        onRequestAutomationPermission: @escaping () -> Void
+        onRequestAutomationPermission: @escaping () -> Void,
+        onOpenAccessibilitySettings: @escaping () -> Void
     ) {
         self.statusPresenter = statusPresenter
         _hotkeySettings = State(initialValue: initialHotkeySettings)
@@ -60,7 +68,8 @@ struct MenuBarScene: Scene {
             runManualCleanup: onCleanClipboardText,
             setHotkeyEnabled: onHotkeyEnabledChanged,
             setHotkeyShortcut: onHotkeyShortcutChanged,
-            requestAutomationPermission: onRequestAutomationPermission
+            requestAutomationPermission: onRequestAutomationPermission,
+            openAccessibilitySettings: onOpenAccessibilitySettings
         )
         KeyboardShortcuts.setShortcut(initialHotkeySettings.shortcut, for: HotkeyShortcutName.cleanAndPaste)
     }
@@ -74,7 +83,7 @@ struct MenuBarScene: Scene {
             Text(hotkeySettings.statusText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Text("Enable to prepare clean-and-paste; execution and permission prompts arrive in Phase 3.")
+            Text("Enable to use clean-and-paste; if permission is needed, guidance appears below.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
 
@@ -101,7 +110,13 @@ struct MenuBarScene: Scene {
                     Text(guidance.settingsPath)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                    ForEach(Array(guidance.manualSteps.enumerated()), id: \.offset) { index, step in
+                        Text("\(index + 1). \(step)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                     Button(guidance.actionTitle, action: menuBarAction.requestAutomationPermissionSelected)
+                    Button("Open Accessibility Settings", action: menuBarAction.openAccessibilitySettingsSelected)
                 }
 
                 Divider()

@@ -3,6 +3,7 @@
 
 # SwiftPM build output
 .build/
+dist/
 
 # Xcode and macOS artifacts
 DerivedData/

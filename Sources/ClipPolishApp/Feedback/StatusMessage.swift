@@ -36,19 +36,38 @@ enum StatusMessage: Equatable, Sendable {
         case .automationPermissionRequired:
             return PermissionGuidance(
                 title: "Hotkey blocked by Accessibility permission",
-                detail: "Enable ClipPolish in macOS Accessibility settings, then retry.",
+                detail: "ClipPolish cannot send Command-V until Accessibility is enabled.",
                 settingsPath: "System Settings -> Privacy & Security -> Accessibility",
-                actionTitle: "Request Accessibility Permission"
+                actionTitle: "Request Accessibility Permission",
+                manualSteps: [
+                    "Open Accessibility settings.",
+                    "Enable ClipPolish in the app list.",
+                    "Return to your app and press the hotkey again."
+                ]
             )
         case .automationPermissionRequestDenied:
             return PermissionGuidance(
                 title: "Accessibility permission not granted yet",
-                detail: "Approve ClipPolish in macOS Accessibility settings, then retry.",
+                detail: "macOS did not grant permission from the request dialog.",
                 settingsPath: "System Settings -> Privacy & Security -> Accessibility",
-                actionTitle: "Request Accessibility Permission"
+                actionTitle: "Request Accessibility Permission",
+                manualSteps: [
+                    "Open Accessibility settings.",
+                    "Enable ClipPolish in the app list.",
+                    "If ClipPolish is missing, quit and relaunch ClipPolish and request again."
+                ]
             )
         case .noPlainText, .alreadyClean, .cleaned, .clipboardReadFailed, .clipboardWriteFailed, .automationPermissionGranted:
             return nil
+        }
+    }
+
+    var shouldAutoDismiss: Bool {
+        switch self {
+        case .automationPermissionRequired, .automationPermissionRequestDenied:
+            return false
+        case .noPlainText, .alreadyClean, .cleaned, .clipboardReadFailed, .clipboardWriteFailed, .automationPermissionGranted:
+            return true
         }
     }
 
@@ -73,4 +92,5 @@ struct PermissionGuidance: Equatable, Sendable {
     let detail: String
     let settingsPath: String
     let actionTitle: String
+    let manualSteps: [String]
 }

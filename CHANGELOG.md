@@ -7,6 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Release installer pipeline (`make build-release-installer`) that builds `dist/ClipPolish-<version>.pkg` and installs `ClipPolish.app` into `/Applications`.
+- Installer post-install flow that opens macOS Accessibility settings and provides a manual permission prompt.
+
+### Changed
+- Accessibility guidance copy in the menu now reflects shipped behavior instead of phase-based wording.
+
 ## [1.0.0] - 2026-03-03
 
 ### Added

@@ -31,6 +31,27 @@ swift build
 swift run ClipPolishApp
 ```
 
+For Accessibility permission testing on macOS, prefer installing and running the dev app bundle:
+
+```bash
+bash scripts/install-dev-app.sh
+```
+
+This installs `~/Applications/ClipPolish Dev.app`, which gives a stable app path for Accessibility settings.
+
+## Release Installer
+
+To produce a release installer package that installs the app into `/Applications`:
+
+```bash
+make build-release-installer
+```
+
+Artifact output: `dist/ClipPolish-<version>.pkg`.
+
+macOS privacy policy does not allow installers to auto-enable Accessibility for normal consumer installs.
+ClipPolish installer opens the Accessibility pane and prompts the user to enable ClipPolish manually.
+
 ## Test and Verify
 
 ```bash
