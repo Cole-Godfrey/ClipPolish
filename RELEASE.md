@@ -19,10 +19,11 @@ make verify-phase3-hotkey-execution
 ## 2. Create Tag
 
 ```bash
-git checkout main
-git pull --ff-only
+git checkout <release-branch>
+git pull --ff-only origin <release-branch>
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
-git push origin main --tags
+git push origin <release-branch>
+git push origin vX.Y.Z
 ```
 
 ## 3. Publish GitHub Release

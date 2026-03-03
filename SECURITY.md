@@ -6,7 +6,7 @@ Security fixes are applied to the latest commit on the default branch.
 
 | Version | Supported |
 |---------|-----------|
-| `main`  | Yes       |
+| `default branch` | Yes |
 | Older commits/tags | No |
 
 ## Reporting a Vulnerability
