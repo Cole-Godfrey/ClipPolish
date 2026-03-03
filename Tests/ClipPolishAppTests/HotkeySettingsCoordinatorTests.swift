@@ -115,6 +115,10 @@ private final class RecordingGlobalHotkeyService: GlobalHotkeyServing, @unchecke
         self.eventLog = eventLog
     }
 
+    var selectedShortcut: KeyboardShortcuts.Shortcut? {
+        registeredShortcuts.last
+    }
+
     func register(shortcut: KeyboardShortcuts.Shortcut) {
         registeredShortcuts.append(shortcut)
         eventLog.events.append(.register(shortcut))
