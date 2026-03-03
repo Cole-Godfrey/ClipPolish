@@ -13,7 +13,13 @@ swift build
 swift test
 ```
 
-4. Run safety verification before opening a PR:
+4. For hotkey/Accessibility testing, run the dev app bundle:
+
+```bash
+bash scripts/install-dev-app.sh
+```
+
+5. Run safety verification before opening a PR:
 
 ```bash
 make verify-phase3-hotkey-execution
@@ -26,6 +32,13 @@ make verify-phase3-hotkey-execution
 - Update docs when behavior or workflows change.
 - Update `CHANGELOG.md` in the `Unreleased` section for user-visible changes.
 - Ensure CI passes.
+- If your PR changes installer/release scripts, validate shell syntax:
+
+```bash
+bash -n scripts/build-release-installer.sh
+bash -n scripts/install-dev-app.sh
+bash -n packaging/macos/scripts/postinstall
+```
 
 ## Code Quality Expectations
 

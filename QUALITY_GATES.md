@@ -8,6 +8,10 @@ All pull requests must satisfy the following before merge.
 2. `make verify-phase3-hotkey-execution` passes.
 3. No new safety denylist violations are introduced.
 4. User-visible changes include tests and changelog updates.
+5. If installer/release scripts changed, shell syntax checks pass:
+   - `bash -n scripts/build-release-installer.sh`
+   - `bash -n scripts/install-dev-app.sh`
+   - `bash -n packaging/macos/scripts/postinstall`
 
 ## Safety Constraints
 

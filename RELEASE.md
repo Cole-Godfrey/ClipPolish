@@ -30,7 +30,7 @@ git push origin vX.Y.Z
 
 1. Create a GitHub Release from tag `vX.Y.Z`.
 2. Paste release notes from the corresponding `CHANGELOG.md` section.
-3. Attach build artifacts if distributing binaries.
+3. Verify the `Release Installer` workflow succeeds and attaches `ClipPolish-<version>.pkg`.
 
 ## 4. Build Installer Artifact
 
@@ -38,6 +38,12 @@ Use the installer pipeline to create a `.pkg` that installs `ClipPolish.app` int
 
 ```bash
 make build-release-installer
+```
+
+Or run directly with explicit version/build values:
+
+```bash
+bash scripts/build-release-installer.sh X.Y.Z <build-number>
 ```
 
 Optional signing env vars:
@@ -48,7 +54,9 @@ Optional signing env vars:
 Output: `dist/ClipPolish-<version>.pkg`
 
 GitHub releases can attach this artifact automatically via `.github/workflows/release-installer.yml`.
-Set repository secrets `CLIPPOLISH_APP_SIGN_IDENTITY` and `CLIPPOLISH_PKG_SIGN_IDENTITY` for signed release publishing.
+For `release` events, the workflow fails fast unless repository secrets are configured:
+- `CLIPPOLISH_APP_SIGN_IDENTITY`
+- `CLIPPOLISH_PKG_SIGN_IDENTITY`
 
 Installer behavior:
 
