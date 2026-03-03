@@ -18,8 +18,20 @@ struct ClipPolishApp: App {
             statusPresenter: presenter
         )
 
+        let permissionService = AutomationPermissionService()
+        let pastePoster = CoreGraphicsPasteEventPoster()
+        let executionCoordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: presenter
+        )
+
         let hotkeyPreferencesStore = HotkeyPreferencesStore()
         let hotkeyService = GlobalHotkeyService()
+        hotkeyService.bindHotkeyHandler {
+            executionCoordinator.runHotkeyCleanAndPaste()
+        }
         let settingsCoordinator = HotkeySettingsCoordinator(
             store: hotkeyPreferencesStore,
             hotkeyService: hotkeyService
