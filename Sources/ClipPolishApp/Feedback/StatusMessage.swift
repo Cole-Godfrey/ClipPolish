@@ -6,6 +6,7 @@ enum StatusMessage: Equatable, Sendable {
     case cleaned(totalCharactersRemoved: Int)
     case clipboardReadFailed
     case clipboardWriteFailed
+    case automationPermissionRequired
 
     var displayText: String {
         switch self {
@@ -19,6 +20,8 @@ enum StatusMessage: Equatable, Sendable {
             return "Could not read clipboard text"
         case .clipboardWriteFailed:
             return "Could not update clipboard text"
+        case .automationPermissionRequired:
+            return "Enable Accessibility permission to use hotkey clean-and-paste"
         }
     }
 

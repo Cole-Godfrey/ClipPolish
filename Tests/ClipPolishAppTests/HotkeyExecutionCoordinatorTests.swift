@@ -11,7 +11,7 @@ struct HotkeyExecutionCoordinatorTests {
         let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
         let permissionService = StubAutomationPermissionService(preflightResult: false, eventLog: eventLog)
         let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
-        let statusPresenter = SpyStatusPresenter()
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
         let coordinator = HotkeyExecutionCoordinator(
             cleanupService: cleanupService,
             permissionService: permissionService,
