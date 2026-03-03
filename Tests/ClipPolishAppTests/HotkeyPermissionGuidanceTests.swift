@@ -90,6 +90,35 @@ struct HotkeyPermissionGuidanceTests {
         #expect(statusPresenter.messages == [.automationPermissionGranted])
     }
 
+    @Test
+    func deniedPermissionRequestPublishesGuidanceMetadataWithoutClipboardDetails() async {
+        let cleanupService = GuidanceStubCleanupService(result: .alreadyClean)
+        let permissionService = GuidanceStubAutomationPermissionService(
+            preflightResult: false,
+            requestResult: false
+        )
+        let pastePoster = GuidanceSpyPasteEventPoster()
+        let statusPresenter = GuidanceSpyStatusPresenter()
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            frontmostApplicationPIDProvider: { 5 }
+        )
+
+        coordinator.requestAutomationPermissionIfNeeded()
+        await drainMainActorQueue()
+
+        #expect(cleanupService.callCount == 0)
+        #expect(pastePoster.postedPIDs.isEmpty)
+        #expect(
+            statusPresenter.messages.last?.permissionGuidance?.settingsPath
+                == "System Settings -> Privacy & Security -> Accessibility"
+        )
+        #expect(statusPresenter.messages.last?.displayText.contains("clipboard") == false)
+    }
+
     private func drainMainActorQueue() async {
         await Task.yield()
         await Task.yield()
