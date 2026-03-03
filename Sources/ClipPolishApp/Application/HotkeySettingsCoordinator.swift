@@ -1,5 +1,11 @@
 import KeyboardShortcuts
 
+enum HotkeyShortcutUpdateOutcome: Equatable {
+    case accepted
+    case blockedConflict(suggestions: [String])
+    case invalidShortcut
+}
+
 @MainActor
 final class HotkeySettingsCoordinator {
     private let store: HotkeyPreferencesStoring
@@ -34,17 +40,25 @@ final class HotkeySettingsCoordinator {
         hotkeyService.unregister()
     }
 
-    func setShortcut(_ shortcut: KeyboardShortcuts.Shortcut?) {
-        store.setShortcut(shortcut)
+    func setShortcut(_ shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutUpdateOutcome {
+        switch hotkeyService.validate(shortcut: shortcut) {
+        case .accepted:
+            store.setShortcut(shortcut)
 
-        guard
-            store.load().isEnabled,
-            let shortcut
-        else {
-            return
+            if store.load().isEnabled {
+                hotkeyService.register(shortcut: shortcut)
+            }
+
+            return .accepted
+        case .blockedConflict(let suggestions):
+            if suggestions.isEmpty {
+                return .blockedConflict(suggestions: Self.defaultConflictSuggestions)
+            }
+
+            return .blockedConflict(suggestions: suggestions)
+        case .invalidShortcut:
+            return .invalidShortcut
         }
-
-        hotkeyService.register(shortcut: shortcut)
     }
 
     private func enableHotkey() {
@@ -58,4 +72,10 @@ final class HotkeySettingsCoordinator {
         store.setHotkeyEnabled(true)
         hotkeyService.register(shortcut: shortcut)
     }
+
+    private static let defaultConflictSuggestions = [
+        "Try Command-Shift-Option-V",
+        "Try Command-Option-V",
+        "Try Control-Shift-V"
+    ]
 }
