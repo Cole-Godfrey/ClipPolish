@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-ClipPolish is pre-1.0. Security fixes are applied to the latest commit on the default branch.
+Security fixes are applied to the latest commit on the default branch.
 
 | Version | Supported |
 |---------|-----------|

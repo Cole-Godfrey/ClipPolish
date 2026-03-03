@@ -8,10 +8,10 @@ ClipPolish uses Semantic Versioning (`MAJOR.MINOR.PATCH`).
 - `MINOR`: backward-compatible feature additions.
 - `PATCH`: backward-compatible fixes.
 
-## Pre-1.0 Behavior
+## Historical Pre-1.0 Behavior
 
-While major version is `0`, minor versions may include breaking changes.
-Breaking changes must still be clearly documented in `CHANGELOG.md`.
+Before `1.0.0`, while major version was `0`, minor versions could include breaking changes.
+Those breaking changes still needed to be clearly documented in `CHANGELOG.md`.
 
 ## Tagging
 

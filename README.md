@@ -6,7 +6,7 @@ The current behavior is intentionally conservative: trim only leading/trailing w
 
 ## Status
 
-ClipPolish is pre-1.0 and currently ships both manual cleanup and global hotkey clean-and-paste workflows.
+ClipPolish is at `1.0.0` and currently ships both manual cleanup and global hotkey clean-and-paste workflows.
 
 Implemented:
 - Menu bar action: `Clean Clipboard Text`
