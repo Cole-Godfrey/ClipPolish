@@ -2,11 +2,23 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CONFIG="${1:-debug}"
+CONFIG="debug"
 RUN_APP="yes"
-if [[ "${2:-}" == "--no-run" ]]; then
-  RUN_APP="no"
-fi
+
+for arg in "$@"; do
+  case "$arg" in
+    debug|release)
+      CONFIG="$arg"
+      ;;
+    --no-run)
+      RUN_APP="no"
+      ;;
+    *)
+      echo "Usage: bash scripts/install-dev-app.sh [debug|release] [--no-run]" >&2
+      exit 1
+      ;;
+  esac
+done
 
 APP_PATH="${CLIPPOLISH_DEV_APP_PATH:-$HOME/Applications/ClipPolish Dev.app}"
 BUNDLE_ID="${CLIPPOLISH_DEV_BUNDLE_ID:-com.clippolish.dev}"

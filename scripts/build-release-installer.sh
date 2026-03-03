@@ -23,6 +23,7 @@ fi
 RELEASE_BINARY_ARCH="$ROOT/.build/arm64-apple-macosx/release/ClipPolishApp"
 RELEASE_BINARY_GENERIC="$ROOT/.build/release/ClipPolishApp"
 
+mkdir -p "$ROOT/.build"
 WORK_DIR="$(mktemp -d "$ROOT/.build/release-installer.XXXXXX")"
 trap 'rm -rf "$WORK_DIR"' EXIT
 

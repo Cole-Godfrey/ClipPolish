@@ -28,7 +28,3 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 - README and OSS workflow docs to document the shipped hotkey + permission behavior and current verification commands.
-
-- README and OSS workflow docs to document the shipped hotkey + permission behavior and current verification commands.   
-
-- README and OSS workflow docs to document the shipped hotkey + permission behavior and current verification commands.

@@ -48,6 +48,7 @@ Optional signing env vars:
 Output: `dist/ClipPolish-<version>.pkg`
 
 GitHub releases can attach this artifact automatically via `.github/workflows/release-installer.yml`.
+Set repository secrets `CLIPPOLISH_APP_SIGN_IDENTITY` and `CLIPPOLISH_PKG_SIGN_IDENTITY` for signed release publishing.
 
 Installer behavior:
 

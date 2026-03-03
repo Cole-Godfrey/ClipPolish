@@ -33,8 +33,27 @@ jobs:
           VERSION="${VERSION#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Validate release signing configuration
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          CLIPPOLISH_APP_SIGN_IDENTITY: ${{ secrets.CLIPPOLISH_APP_SIGN_IDENTITY }}
+          CLIPPOLISH_PKG_SIGN_IDENTITY: ${{ secrets.CLIPPOLISH_PKG_SIGN_IDENTITY }}
+        run: |
+          if [[ -z "$CLIPPOLISH_APP_SIGN_IDENTITY" ]]; then
+            echo "Missing required secret: CLIPPOLISH_APP_SIGN_IDENTITY" >&2
+            exit 1
+          fi
+          if [[ -z "$CLIPPOLISH_PKG_SIGN_IDENTITY" ]]; then
+            echo "Missing required secret: CLIPPOLISH_PKG_SIGN_IDENTITY" >&2
+            exit 1
+          fi
+
       - name: Build installer
         shell: bash
+        env:
+          CLIPPOLISH_APP_SIGN_IDENTITY: ${{ secrets.CLIPPOLISH_APP_SIGN_IDENTITY }}
+          CLIPPOLISH_PKG_SIGN_IDENTITY: ${{ secrets.CLIPPOLISH_PKG_SIGN_IDENTITY }}
         run: |
           if [[ -n "${{ steps.version.outputs.version }}" ]]; then
             bash scripts/build-release-installer.sh "${{ steps.version.outputs.version }}"
