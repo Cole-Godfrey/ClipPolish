@@ -16,6 +16,9 @@ let package = Package(
             targets: ["ClipPolishApp"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", exact: "2.0.2")
+    ],
     targets: [
         .target(
             name: "ClipPolishCore",
@@ -23,7 +26,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "ClipPolishApp",
-            dependencies: ["ClipPolishCore"],
+            dependencies: [
+                "ClipPolishCore",
+                .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts")
+            ],
             path: "Sources/ClipPolishApp"
         ),
         .testTarget(
