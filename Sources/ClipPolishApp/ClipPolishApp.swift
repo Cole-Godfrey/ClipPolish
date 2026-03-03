@@ -5,6 +5,7 @@ import SwiftUI
 struct ClipPolishApp: App {
     @StateObject private var statusPresenter: StatusPresenter
     private let menuActionCoordinator: MenuActionCoordinator
+    private let hotkeyExecutionCoordinator: HotkeyExecutionCoordinator
     private let hotkeySettingsCoordinator: HotkeySettingsCoordinator
     private let initialHotkeySettings: HotkeySettingsState
 
@@ -26,6 +27,7 @@ struct ClipPolishApp: App {
             pastePoster: pastePoster,
             statusPresenter: presenter
         )
+        hotkeyExecutionCoordinator = executionCoordinator
 
         let hotkeyPreferencesStore = HotkeyPreferencesStore()
         let hotkeyService = GlobalHotkeyService()
@@ -51,6 +53,9 @@ struct ClipPolishApp: App {
             },
             onHotkeyShortcutChanged: { shortcut in
                 hotkeySettingsCoordinator.setShortcut(shortcut)
+            },
+            onRequestAutomationPermission: {
+                hotkeyExecutionCoordinator.requestAutomationPermissionIfNeeded()
             }
         )
     }
