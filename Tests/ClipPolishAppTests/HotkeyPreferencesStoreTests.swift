@@ -38,4 +38,28 @@ struct HotkeyPreferencesStoreTests {
             ]
         )
     }
+
+    @Test
+    func relaunchStoreInstanceReadsPersistedEnabledStateAndShortcut() {
+        let suiteName = "HotkeyPreferencesStoreTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let expectedShortcut = KeyboardShortcuts.Shortcut(.j, modifiers: [.command, .shift])
+        let firstLaunchStore = HotkeyPreferencesStore(userDefaults: defaults)
+        firstLaunchStore.save(
+            HotkeyPreferences(
+                isEnabled: true,
+                shortcut: expectedShortcut
+            )
+        )
+
+        let relaunchedStore = HotkeyPreferencesStore(userDefaults: defaults)
+        let loaded = relaunchedStore.load()
+
+        #expect(loaded.isEnabled)
+        #expect(loaded.shortcut == expectedShortcut)
+    }
 }
