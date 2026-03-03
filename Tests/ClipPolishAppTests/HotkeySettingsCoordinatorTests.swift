@@ -187,6 +187,8 @@ private final class RecordingGlobalHotkeyService: GlobalHotkeyServing, @unchecke
         unregisterCallCount += 1
     }
 
+    func bindHotkeyHandler(_ handler: @escaping @MainActor @Sendable () -> Void) {}
+
     func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?) {}
 
     func validate(shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutValidationResult {

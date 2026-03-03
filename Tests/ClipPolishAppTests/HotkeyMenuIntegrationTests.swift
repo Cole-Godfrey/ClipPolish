@@ -158,6 +158,8 @@ private final class StubGlobalHotkeyService: GlobalHotkeyServing, @unchecked Sen
         unregisterCallCount += 1
     }
 
+    func bindHotkeyHandler(_ handler: @escaping @MainActor @Sendable () -> Void) {}
+
     func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?) {
         applyCalls.append(
             ApplyCall(

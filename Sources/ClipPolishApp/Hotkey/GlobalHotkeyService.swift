@@ -6,6 +6,7 @@ protocol GlobalHotkeyServing: Sendable {
     var selectedShortcut: KeyboardShortcuts.Shortcut? { get }
     func register(shortcut: KeyboardShortcuts.Shortcut)
     func unregister()
+    func bindHotkeyHandler(_ handler: @escaping @MainActor @Sendable () -> Void)
     func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?)
     func validate(shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutValidationResult
 }
@@ -23,6 +24,7 @@ enum HotkeyShortcutName {
 @MainActor
 final class GlobalHotkeyService: GlobalHotkeyServing {
     private let name: KeyboardShortcuts.Name
+    private var isHotkeyHandlerBound: Bool = false
 
     init(name: KeyboardShortcuts.Name = HotkeyShortcutName.cleanAndPaste) {
         self.name = name
@@ -39,6 +41,15 @@ final class GlobalHotkeyService: GlobalHotkeyServing {
 
     func unregister() {
         KeyboardShortcuts.disable(name)
+    }
+
+    func bindHotkeyHandler(_ handler: @escaping @MainActor @Sendable () -> Void) {
+        guard !isHotkeyHandlerBound else {
+            return
+        }
+
+        isHotkeyHandlerBound = true
+        KeyboardShortcuts.onKeyUp(for: name, action: handler)
     }
 
     func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?) {
