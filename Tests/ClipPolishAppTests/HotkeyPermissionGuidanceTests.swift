@@ -127,6 +127,11 @@ private final class GuidanceStubAutomationPermissionService: AutomationPermissio
         preflightCallCount += 1
         return preflightResult
     }
+
+    func requestPostEventAccess() -> Bool {
+        requestCallCount += 1
+        return requestResult
+    }
 }
 
 private final class GuidanceSpyPasteEventPoster: PasteEventPosting, @unchecked Sendable {

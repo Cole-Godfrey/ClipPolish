@@ -51,6 +51,20 @@ final class HotkeyExecutionCoordinator {
         }
     }
 
+    func requestAutomationPermissionIfNeeded() {
+        guard activeExecution == nil else {
+            return
+        }
+
+        guard !permissionService.preflightPostEventAccess() else {
+            statusPresenter.show(.automationPermissionGranted)
+            return
+        }
+
+        let granted = permissionService.requestPostEventAccess()
+        statusPresenter.show(granted ? .automationPermissionGranted : .automationPermissionRequestDenied)
+    }
+
     private static func shouldPostPaste(for cleanupResult: CleanupResult) -> Bool {
         switch cleanupResult {
         case .cleaned, .alreadyClean:
