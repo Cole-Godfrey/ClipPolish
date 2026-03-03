@@ -80,6 +80,21 @@ struct MenuBarActionTests {
 
         #expect(outcome == .invalidShortcut)
     }
+
+    @Test
+    func requestPermissionCommandInvokesHandlerOnce() {
+        let recorder = InvocationRecorder()
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            requestAutomationPermission: {
+                recorder.record()
+            }
+        )
+
+        action.requestAutomationPermissionSelected()
+
+        #expect(recorder.invocationCount == 1)
+    }
 }
 
 private final class InvocationRecorder: @unchecked Sendable {

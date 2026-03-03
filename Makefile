@@ -1,4 +1,4 @@
-.PHONY: verify-phase1-safety verify-phase2-hotkey-controls
+.PHONY: verify-phase1-safety verify-phase2-hotkey-controls verify-phase3-hotkey-execution
 
 verify-phase1-safety:
 	swift test --filter ClipboardNoOpSafetyTests
@@ -10,3 +10,8 @@ verify-phase2-hotkey-controls:
 	swift test --filter MenuBarActionTests
 	swift test --filter HotkeyPreferencesStoreTests
 	$(MAKE) verify-phase1-safety
+
+verify-phase3-hotkey-execution:
+	swift test --filter HotkeyExecutionCoordinatorTests
+	swift test --filter HotkeyPermissionGuidanceTests
+	$(MAKE) verify-phase2-hotkey-controls

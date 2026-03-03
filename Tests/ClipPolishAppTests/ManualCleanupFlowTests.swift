@@ -91,6 +91,28 @@ struct ManualCleanupFlowTests {
         #expect(gateway.snapshot.writeHistory == ["Hello"])
         #expect(presenter.messages.last == .cleaned(totalCharactersRemoved: 4))
     }
+
+    @Test
+    func manualCleanupStillRunsWhenPermissionGuidanceWasShownPreviously() {
+        let gateway = TrackingClipboardGateway(
+            payloadType: .plainText,
+            plainTextSnapshot: " \u{200B}Hello \n"
+        )
+        let cleanupService = CleanupService(gateway: gateway, sanitizer: TextSanitizer())
+        let presenter = SpyStatusPresenter()
+        let coordinator = MenuActionCoordinator(
+            cleanupService: cleanupService,
+            statusPresenter: presenter
+        )
+
+        presenter.show(.automationPermissionRequired)
+        coordinator.runManualCleanup()
+
+        #expect(gateway.readCallCount == 1)
+        #expect(gateway.writeCallCount == 1)
+        #expect(gateway.snapshot.plainText == "Hello")
+        #expect(presenter.messages.last == .cleaned(totalCharactersRemoved: 4))
+    }
 }
 
 @MainActor

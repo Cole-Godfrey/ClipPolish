@@ -6,17 +6,20 @@ struct MenuBarAction {
     private let runManualCleanup: () -> Void
     private let setHotkeyEnabled: (Bool) -> Void
     private let setHotkeyShortcut: (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome
+    private let requestAutomationPermission: () -> Void
 
     init(
         runManualCleanup: @escaping () -> Void,
         setHotkeyEnabled: @escaping (Bool) -> Void = { _ in },
         setHotkeyShortcut: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome = { shortcut in
             shortcut == nil ? .invalidShortcut : .accepted
-        }
+        },
+        requestAutomationPermission: @escaping () -> Void = {}
     ) {
         self.runManualCleanup = runManualCleanup
         self.setHotkeyEnabled = setHotkeyEnabled
         self.setHotkeyShortcut = setHotkeyShortcut
+        self.requestAutomationPermission = requestAutomationPermission
     }
 
     func cleanClipboardTextSelected() {
@@ -29,6 +32,10 @@ struct MenuBarAction {
 
     func hotkeyShortcutChanged(_ shortcut: KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome {
         setHotkeyShortcut(shortcut)
+    }
+
+    func requestAutomationPermissionSelected() {
+        requestAutomationPermission()
     }
 }
 
@@ -43,7 +50,8 @@ struct MenuBarScene: Scene {
         initialHotkeySettings: HotkeySettingsState,
         onCleanClipboardText: @escaping () -> Void,
         onHotkeyEnabledChanged: @escaping (Bool) -> Void,
-        onHotkeyShortcutChanged: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome
+        onHotkeyShortcutChanged: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome,
+        onRequestAutomationPermission: @escaping () -> Void
     ) {
         self.statusPresenter = statusPresenter
         _hotkeySettings = State(initialValue: initialHotkeySettings)
@@ -51,7 +59,8 @@ struct MenuBarScene: Scene {
         self.menuBarAction = MenuBarAction(
             runManualCleanup: onCleanClipboardText,
             setHotkeyEnabled: onHotkeyEnabledChanged,
-            setHotkeyShortcut: onHotkeyShortcutChanged
+            setHotkeyShortcut: onHotkeyShortcutChanged,
+            requestAutomationPermission: onRequestAutomationPermission
         )
         KeyboardShortcuts.setShortcut(initialHotkeySettings.shortcut, for: HotkeyShortcutName.cleanAndPaste)
     }
@@ -81,6 +90,20 @@ struct MenuBarScene: Scene {
                 Text(message.displayText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                if let guidance = message.permissionGuidance {
+                    Text(guidance.title)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(guidance.detail)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(guidance.settingsPath)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Button(guidance.actionTitle, action: menuBarAction.requestAutomationPermissionSelected)
+                }
+
                 Divider()
             }
 
