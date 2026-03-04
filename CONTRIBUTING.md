@@ -22,7 +22,7 @@ bash scripts/install-dev-app.sh
 5. Run safety verification before opening a PR:
 
 ```bash
-make verify-phase5-mixed-payload
+make verify-phase6-hotkey-conflict
 ```
 
 ## Pull Request Guidelines
