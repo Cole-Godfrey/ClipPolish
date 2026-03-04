@@ -6,7 +6,7 @@ import Testing
 @MainActor
 struct HotkeyMenuIntegrationTests {
     @Test
-    func enableDisableFlowPreservesShortcutAcrossReEnable() {
+    func acceptedMenuShortcutUpdatePersistsAndSurvivesEnableDisableLifecycle() {
         let suiteName = "HotkeyMenuIntegrationTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defer {
@@ -20,21 +20,77 @@ struct HotkeyMenuIntegrationTests {
             hotkeyService: hotkeyService
         )
         let selectedShortcut = KeyboardShortcuts.Shortcut(.k, modifiers: [.command, .option])
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            setHotkeyEnabled: coordinator.setHotkeyEnabled,
+            setHotkeyShortcut: coordinator.setShortcut,
+            currentHotkeySettings: coordinator.currentSettings
+        )
 
-        #expect(coordinator.setShortcut(selectedShortcut) == .accepted)
-        coordinator.setHotkeyEnabled(true)
-        coordinator.setHotkeyEnabled(false)
-        coordinator.setHotkeyEnabled(true)
+        #expect(action.hotkeyShortcutChanged(selectedShortcut) == .accepted)
+        action.hotkeyEnabledChanged(true)
+        action.hotkeyEnabledChanged(false)
+        action.hotkeyEnabledChanged(true)
 
-        let current = coordinator.currentSettings()
-        #expect(current.isEnabled)
-        #expect(current.shortcut == selectedShortcut)
+        let current = action.refreshedHotkeySettings()
+        #expect(current?.isEnabled == true)
+        #expect(current?.shortcut == selectedShortcut)
+        #expect(store.load().shortcut == selectedShortcut)
         #expect(hotkeyService.registeredShortcuts == [selectedShortcut, selectedShortcut])
-        #expect(hotkeyService.unregisterCallCount == 1)
+        #expect(hotkeyService.unregisterCallCount == 2)
     }
 
     @Test
-    func conflictingShortcutDoesNotOverwriteLastValidValue() {
+    func invalidMenuShortcutUpdatePreservesPersistedShortcutAndRuntimeState() {
+        let suiteName = "HotkeyMenuIntegrationTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let existingShortcut = KeyboardShortcuts.Shortcut(.c, modifiers: [.command, .shift])
+        let attemptedShortcut = KeyboardShortcuts.Shortcut(.v, modifiers: [])
+        let store = HotkeyPreferencesStore(userDefaults: defaults)
+        store.save(
+            HotkeyPreferences(
+                isEnabled: true,
+                shortcut: existingShortcut
+            )
+        )
+
+        let hotkeyService = StubGlobalHotkeyService()
+        hotkeyService.validationResult = .invalidShortcut
+        let coordinator = HotkeySettingsCoordinator(
+            store: store,
+            hotkeyService: hotkeyService
+        )
+        coordinator.applyStoredSettings()
+
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            setHotkeyEnabled: coordinator.setHotkeyEnabled,
+            setHotkeyShortcut: coordinator.setShortcut,
+            currentHotkeySettings: coordinator.currentSettings
+        )
+
+        let outcome = action.hotkeyShortcutChanged(attemptedShortcut)
+
+        #expect(outcome == .invalidShortcut)
+        #expect(store.load().shortcut == existingShortcut)
+        #expect(action.refreshedHotkeySettings()?.shortcut == existingShortcut)
+        #expect(
+            hotkeyService.applyCalls
+                == [
+                    .init(isEnabled: true, shortcut: existingShortcut),
+                    .init(isEnabled: true, shortcut: existingShortcut)
+                ]
+        )
+        #expect(hotkeyService.registeredShortcuts == [existingShortcut, existingShortcut])
+        #expect(hotkeyService.unregisterCallCount == 0)
+    }
+
+    @Test
+    func conflictMenuShortcutUpdatePreservesShortcutAndReturnsDeterministicGuidance() {
         let suiteName = "HotkeyMenuIntegrationTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defer {
@@ -52,30 +108,52 @@ struct HotkeyMenuIntegrationTests {
         )
 
         let hotkeyService = StubGlobalHotkeyService()
-        hotkeyService.validationResult = .blockedConflict(
-            suggestions: [
-                "Try Command-Shift-Option-V",
-                "Try Command-Option-V"
-            ]
-        )
+        hotkeyService.validationResult = .blockedConflict(suggestions: [])
 
         let coordinator = HotkeySettingsCoordinator(
             store: store,
             hotkeyService: hotkeyService
         )
+        coordinator.applyStoredSettings()
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            setHotkeyEnabled: coordinator.setHotkeyEnabled,
+            setHotkeyShortcut: coordinator.setShortcut,
+            currentHotkeySettings: coordinator.currentSettings
+        )
 
-        let outcome = coordinator.setShortcut(attemptedShortcut)
+        let firstOutcome = action.hotkeyShortcutChanged(attemptedShortcut)
+        let secondOutcome = action.hotkeyShortcutChanged(attemptedShortcut)
 
         #expect(
-            outcome == .blockedConflict(
+            firstOutcome == .blockedConflict(
                 suggestions: [
                     "Try Command-Shift-Option-V",
-                    "Try Command-Option-V"
+                    "Try Command-Option-V",
+                    "Try Control-Shift-V"
+                ]
+            )
+        )
+        #expect(
+            secondOutcome == .blockedConflict(
+                suggestions: [
+                    "Try Command-Shift-Option-V",
+                    "Try Command-Option-V",
+                    "Try Control-Shift-V"
                 ]
             )
         )
         #expect(store.load().shortcut == existingShortcut)
-        #expect(hotkeyService.registeredShortcuts.isEmpty)
+        #expect(action.refreshedHotkeySettings()?.shortcut == existingShortcut)
+        #expect(hotkeyService.registeredShortcuts == [existingShortcut, existingShortcut, existingShortcut])
+        #expect(
+            hotkeyService.applyCalls
+                == [
+                    .init(isEnabled: true, shortcut: existingShortcut),
+                    .init(isEnabled: true, shortcut: existingShortcut),
+                    .init(isEnabled: true, shortcut: existingShortcut)
+                ]
+        )
     }
 
     @Test
