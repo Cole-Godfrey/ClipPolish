@@ -21,10 +21,10 @@ Install steps:
 bash scripts/install-app.sh
 ```
 
-3. Launch `ClipPolish.app` from `~/Applications`.
-4. Confirm the menu bar icon appears.
-5. In the menu bar app, enable `Enable Global Hotkey` (default shortcut: `Command` + `Shift` + `Option` + `V`).
-6. Enable Accessibility permission when prompted, then click `Restart ClipPolish` from the menu to reload permission state before testing the hotkey.
+3. Enable Accessibility permission when prompted.
+4. Confirm the menu bar icon appears, then click the icon to open the menu.
+5. Click `Restart ClipPolish` from the menu to reload permission state.
+6. In the menu bar app, enable `Enable Global Hotkey` if it is not already enabled (default shortcut: `Command` + `Shift` + `Option` + `V`).
 
 Default install location: `~/Applications/ClipPolish.app`
 
