@@ -73,6 +73,46 @@ struct CleanupServiceTests {
         #expect(result == .clipboardWriteFailed)
         #expect(gateway.writeCallCount == 1)
     }
+
+    @Test
+    func cleanedSummaryTotalDoesNotExceedObservedCharacterRemoval() {
+        let originalText = " \u{200B}Alpha\u{2060}  \n"
+        let gateway = MockClipboardGateway(
+            payloadType: .plainText,
+            readResult: .success(originalText)
+        )
+        let sanitizer = TextSanitizer()
+        let expectedSanitized = sanitizer.sanitize(originalText, lineEndingStyle: .preserve)
+        let service = CleanupService(gateway: gateway, sanitizer: sanitizer)
+
+        let result = service.cleanCurrentClipboardText()
+
+        if case let .cleaned(summary) = result {
+            let observedRemoval = max(0, originalText.count - expectedSanitized.count)
+            #expect(summary.totalCharactersRemoved <= observedRemoval)
+        } else {
+            Issue.record("Expected cleaned result with summary metadata")
+        }
+
+        #expect(gateway.lastWrittenText == expectedSanitized)
+    }
+
+    @Test
+    func nonTextPayloadSkipsReadAndWriteEvenWhenGatewayOperationsWouldFail() {
+        let gateway = MockClipboardGateway(
+            payloadType: .nonText,
+            readResult: .failure(MockClipboardError.readFailed),
+            writeResult: .failure(MockClipboardError.writeFailed)
+        )
+        let service = CleanupService(gateway: gateway, sanitizer: TextSanitizer())
+
+        let result = service.cleanCurrentClipboardText()
+
+        #expect(result == .noPlainText)
+        #expect(gateway.payloadTypeCallCount == 1)
+        #expect(gateway.readCallCount == 0)
+        #expect(gateway.writeCallCount == 0)
+    }
 }
 
 private final class MockClipboardGateway: ClipboardGateway, @unchecked Sendable {
