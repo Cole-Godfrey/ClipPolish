@@ -76,6 +76,7 @@ struct GlobalHotkeyServiceValidationTests {
 private struct StubHotkeyConflictDetector: HotkeyConflictDetecting {
     let conflict: HotkeyConflict?
 
+    @MainActor
     func conflict(for shortcut: KeyboardShortcuts.Shortcut) -> HotkeyConflict? {
         conflict
     }

@@ -24,10 +24,15 @@ enum HotkeyShortcutName {
 @MainActor
 final class GlobalHotkeyService: GlobalHotkeyServing {
     private let name: KeyboardShortcuts.Name
+    private let conflictDetector: any HotkeyConflictDetecting
     private var isHotkeyHandlerBound: Bool = false
 
-    init(name: KeyboardShortcuts.Name = HotkeyShortcutName.cleanAndPaste) {
+    init(
+        name: KeyboardShortcuts.Name = HotkeyShortcutName.cleanAndPaste,
+        conflictDetector: any HotkeyConflictDetecting = ProductionHotkeyConflictDetector()
+    ) {
         self.name = name
+        self.conflictDetector = conflictDetector
     }
 
     var selectedShortcut: KeyboardShortcuts.Shortcut? {
@@ -66,6 +71,27 @@ final class GlobalHotkeyService: GlobalHotkeyServing {
             return .invalidShortcut
         }
 
+        if let conflict = conflictDetector.conflict(for: shortcut) {
+            return .blockedConflict(suggestions: Self.suggestions(for: conflict))
+        }
+
         return .accepted
+    }
+
+    private static func suggestions(for conflict: HotkeyConflict) -> [String] {
+        switch conflict {
+        case .systemReserved:
+            return [
+                "Try Command-Shift-Option-V",
+                "Try Command-Option-V",
+                "Try Control-Shift-V"
+            ]
+        case .appMenu:
+            return [
+                "Try Command-Shift-Option-V",
+                "Try Command-Option-V",
+                "Try Control-Option-V"
+            ]
+        }
     }
 }
