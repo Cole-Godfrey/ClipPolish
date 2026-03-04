@@ -125,29 +125,6 @@ pasteboard.writeObjects([item])
 SWIFT
 }
 
-pasteboard_snapshot_hash() {
-  local snapshot
-  snapshot="$(/usr/bin/swift <<'SWIFT'
-import AppKit
-import Foundation
-
-let pasteboard = NSPasteboard.general
-let itemSnapshots: [String] = (pasteboard.pasteboardItems ?? []).map { item in
-  item.types
-    .sorted(by: { $0.rawValue < $1.rawValue })
-    .map { type in
-      let data = item.data(forType: type) ?? Data()
-      return "\(type.rawValue):\(data.base64EncodedString())"
-    }
-    .joined(separator: "|")
-}
-
-print(itemSnapshots.joined(separator: "||"))
-SWIFT
-)"
-  printf '%s' "$snapshot" | shasum -a 256 | awk '{print $1}'
-}
-
 check_live_permission_or_skip() {
   local scenario="$1"
   local log_path="$2"
@@ -247,8 +224,6 @@ run_mixed_payload_scenario() {
   local log_path="$TMP_DIR/mixed-payload.log"
 
   seed_mixed_payload
-  local before_hash
-  before_hash="$(pasteboard_snapshot_hash)"
 
   launch_app "$log_path" "live"
   if ! trigger_hotkey; then
@@ -259,13 +234,13 @@ run_mixed_payload_scenario() {
   if ! check_live_permission_or_skip "$scenario" "$log_path"; then
     return 2
   fi
-  require_log_pattern "$log_path" 'hotkey.cleanup=noPlainText' "scenario=$scenario expected cleanup=noPlainText"
-  require_log_pattern "$log_path" 'hotkey.paste=skipped' "scenario=$scenario expected paste=skipped"
+  require_log_pattern "$log_path" 'hotkey.cleanup=cleaned' "scenario=$scenario expected cleanup=cleaned"
+  require_log_pattern "$log_path" 'hotkey.paste=posted' "scenario=$scenario expected paste=posted"
 
-  local after_hash
-  after_hash="$(pasteboard_snapshot_hash)"
-  if [[ "$after_hash" != "$before_hash" ]]; then
-    fail "scenario=$scenario mixed payload representations changed unexpectedly"
+  local after_text
+  after_text="$(pbpaste)"
+  if [[ "$after_text" != "ClipPolish Smoke" ]]; then
+    fail "scenario=$scenario expected sanitized plain text in clipboard"
   fi
 
   stop_app

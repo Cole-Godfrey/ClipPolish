@@ -1,6 +1,11 @@
 # ClipPolish
 
+   ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.   
+   ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.   
 ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.
+ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.
+ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.
+
 
 The current behavior is intentionally conservative: trim only leading/trailing whitespace and remove a small denylist of invisible Unicode scalars that commonly break pastes or tooling.
 
@@ -130,7 +135,7 @@ make verify-phase7-hotkey-e2e
 
 Phase 7 verification policy:
 - `make verify-phase7-hotkey-e2e` is the default deterministic command. It runs phase-7 core invariants/hotkey tests and chains prior phase verification (`verify-phase6-hotkey-conflict` and below).
-- `make verify-phase7-hotkey-smoke` is optional process-level smoke validation for real app-process hotkey behavior (relaunch, permission denied, mixed-payload no-op).
+- `make verify-phase7-hotkey-smoke` is optional process-level smoke validation for real app-process hotkey behavior (relaunch, permission denied, mixed-payload cleanup).
 - Smoke runs only when explicitly opted in:
 
 ```bash
@@ -151,7 +156,7 @@ bash -n scripts/install-dev-app.sh
 
 ClipPolish is designed to be predictable and low-risk.
 
-- It only modifies plain-text payloads.
+- It only modifies payloads that expose plain text and resolve to text UTTypes.
 - It only writes back sanitized text when output differs from input.
 - Hotkey automation is gated by macOS Accessibility permission checks.
 - It does not persist clipboard history.

@@ -20,6 +20,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Default deterministic project verification now runs through `make verify-phase7-hotkey-e2e`, with smoke verification kept as explicit opt-in.
 - Contributor workflows (`CONTRIBUTING.md`, `QUALITY_GATES.md`, `RELEASE.md`, and PR template) now align to phase-7 verification commands and smoke-run policy.
 
+### Fixed
+- Mixed-format text payloads are once again classified as cleanable text (instead of `noPlainText`), restoring trailing-whitespace cleanup and hotkey clean-and-paste for common rich-text clipboard entries.
+
 ## [1.0.1] - 2026-03-03
 
 ### Added

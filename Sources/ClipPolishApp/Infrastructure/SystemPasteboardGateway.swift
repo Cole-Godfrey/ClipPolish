@@ -16,7 +16,7 @@ final class SystemPasteboardGateway: ClipboardGateway, @unchecked Sendable {
     }
 
     func currentPayloadType() -> ClipboardPayloadType {
-        isPlainTextOnlyPayload() ? .plainText : .nonText
+        isTextPayloadWithPlainTextRepresentation() ? .plainText : .nonText
     }
 
     func readPlainText() throws -> String {
@@ -28,7 +28,7 @@ final class SystemPasteboardGateway: ClipboardGateway, @unchecked Sendable {
 
     func writePlainText(_ text: String, onlyIfCurrentMatches expectedCurrentText: String) throws {
         guard
-            isPlainTextOnlyPayload(),
+            isTextPayloadWithPlainTextRepresentation(),
             pasteboard.string(forType: .string) == expectedCurrentText
         else {
             throw SystemPasteboardGatewayError.clipboardChanged
@@ -40,29 +40,53 @@ final class SystemPasteboardGateway: ClipboardGateway, @unchecked Sendable {
         }
     }
 
-    private func isPlainTextOnlyPayload() -> Bool {
+    private func isTextPayloadWithPlainTextRepresentation() -> Bool {
         guard
             let items = pasteboard.pasteboardItems,
-            items.count == 1,
-            let item = items.first
-        else {
-            return false
-        }
-
-        let types = item.types
-        guard
-            !types.isEmpty,
-            types.allSatisfy({ type in
-                guard let resolvedType = UTType(type.rawValue) else {
-                    return false
-                }
-                return resolvedType.conforms(to: .plainText)
-            }),
+            !items.isEmpty,
             pasteboard.string(forType: .string) != nil
         else {
             return false
         }
 
+        for item in items {
+            let types = item.types
+            guard !types.isEmpty else {
+                return false
+            }
+
+            let onlyTextOrOpaque = types.allSatisfy { type in
+                guard let resolvedType = UTType(type.rawValue) else {
+                    // Allow opaque app-specific sidecars when a string representation exists.
+                    return true
+                }
+                return !Self.isExplicitlyNonTextType(resolvedType)
+            }
+
+            if !onlyTextOrOpaque {
+                return false
+            }
+        }
+
         return true
+    }
+
+    private static func isExplicitlyNonTextType(_ type: UTType) -> Bool {
+        if type.conforms(to: .text) {
+            return false
+        }
+
+        let blockedTypes: [UTType] = [
+            .image,
+            .movie,
+            .audio,
+            .pdf,
+            .url,
+            .fileURL,
+            .archive,
+            .executable
+        ]
+
+        return blockedTypes.contains(where: { type.conforms(to: $0) })
     }
 }

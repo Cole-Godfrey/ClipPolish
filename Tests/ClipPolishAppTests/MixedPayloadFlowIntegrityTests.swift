@@ -1,16 +1,14 @@
 import AppKit
 import ClipPolishCore
-import Foundation
 import Testing
 @testable import ClipPolishApp
 
 @MainActor
 struct MixedPayloadFlowIntegrityTests {
     @Test
-    func manualEntryPointNoOpsMixedPayloadAndPreservesRepresentations() {
+    func manualEntryPointSanitizesMixedPayloadAndPublishesCleanedStatus() {
         let pasteboard = makePasteboard()
         seedMixedTextPayload(" \u{200B}Hello \n", on: pasteboard)
-        let before = snapshot(of: pasteboard)
         let cleanupService = makeCleanupService(for: pasteboard)
         let statusPresenter = SpyStatusPresenter()
         let coordinator = MenuActionCoordinator(
@@ -20,15 +18,14 @@ struct MixedPayloadFlowIntegrityTests {
 
         coordinator.runManualCleanup()
 
-        #expect(snapshot(of: pasteboard) == before)
-        #expect(statusPresenter.messages == [.noPlainText])
+        #expect(pasteboard.string(forType: .string) == "Hello")
+        #expect(statusPresenter.messages == [.cleaned(totalCharactersRemoved: 4)])
     }
 
     @Test
-    func hotkeyEntryPointNoOpsMixedPayloadAndSkipsPaste() async {
+    func hotkeyEntryPointSanitizesMixedPayloadAndPostsPaste() async {
         let pasteboard = makePasteboard()
         seedMixedTextPayload(" \u{200B}Hello \n", on: pasteboard)
-        let before = snapshot(of: pasteboard)
         let cleanupService = makeCleanupService(for: pasteboard)
         let permissionService = StubAutomationPermissionService(preflightResult: true, requestResult: false)
         let pastePoster = SpyPasteEventPoster()
@@ -44,10 +41,10 @@ struct MixedPayloadFlowIntegrityTests {
         coordinator.runHotkeyCleanAndPaste()
         await drainMainActorQueue()
 
-        #expect(snapshot(of: pasteboard) == before)
+        #expect(pasteboard.string(forType: .string) == "Hello")
         #expect(permissionService.requestCallCount == 0)
-        #expect(pastePoster.postedPIDs.isEmpty)
-        #expect(statusPresenter.messages == [.noPlainText])
+        #expect(pastePoster.postedPIDs == [5150])
+        #expect(statusPresenter.messages == [.cleaned(totalCharactersRemoved: 4)])
     }
 
     @Test
@@ -114,34 +111,11 @@ struct MixedPayloadFlowIntegrityTests {
         #expect(pasteboard.setString(text, forType: .string))
     }
 
-    private func snapshot(of pasteboard: NSPasteboard) -> [PasteboardItemSnapshot] {
-        (pasteboard.pasteboardItems ?? []).map { item in
-            PasteboardItemSnapshot(
-                representations: item.types.map { type in
-                    PasteboardRepresentationSnapshot(
-                        type: type.rawValue,
-                        bytes: item.data(forType: type) ?? Data()
-                    )
-                }
-                .sorted(by: { lhs, rhs in lhs.type < rhs.type })
-            )
-        }
-    }
-
     private func drainMainActorQueue() async {
         await Task.yield()
         await Task.yield()
         await Task.yield()
     }
-}
-
-private struct PasteboardItemSnapshot: Equatable {
-    let representations: [PasteboardRepresentationSnapshot]
-}
-
-private struct PasteboardRepresentationSnapshot: Equatable {
-    let type: String
-    let bytes: Data
 }
 
 private final class StubAutomationPermissionService: AutomationPermissionServing, @unchecked Sendable {

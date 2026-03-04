@@ -155,6 +155,52 @@ struct HotkeyPermissionGuidanceTests {
     }
 
     @Test
+    func automationPermissionServicePreflightFallsBackToAXTrust() {
+        let quartzPreflightCallCount = CounterBox()
+        let axPreflightCallCount = CounterBox()
+        let service = AutomationPermissionService(
+            environment: [:],
+            preflightPostEventAccessProvider: {
+                quartzPreflightCallCount.increment()
+                return false
+            },
+            requestPostEventAccessProvider: { false },
+            preflightAccessibilityTrustProvider: {
+                axPreflightCallCount.increment()
+                return true
+            },
+            requestAccessibilityTrustProvider: { false }
+        )
+
+        #expect(service.preflightPostEventAccess() == true)
+        #expect(quartzPreflightCallCount.value == 1)
+        #expect(axPreflightCallCount.value == 1)
+    }
+
+    @Test
+    func automationPermissionServiceRequestFallsBackToAXPromptWhenQuartzRequestFails() {
+        let quartzRequestCallCount = CounterBox()
+        let axRequestCallCount = CounterBox()
+        let service = AutomationPermissionService(
+            environment: [:],
+            preflightPostEventAccessProvider: { false },
+            requestPostEventAccessProvider: {
+                quartzRequestCallCount.increment()
+                return false
+            },
+            preflightAccessibilityTrustProvider: { false },
+            requestAccessibilityTrustProvider: {
+                axRequestCallCount.increment()
+                return true
+            }
+        )
+
+        #expect(service.requestPostEventAccess() == true)
+        #expect(quartzRequestCallCount.value == 1)
+        #expect(axRequestCallCount.value == 1)
+    }
+
+    @Test
     func smokeDiagnosticsSinkRequiresExplicitOptInEnvironment() {
         #expect(
             HotkeySmokeDiagnosticsFileSink(
@@ -222,6 +268,23 @@ private final class GuidanceSpyPasteEventPoster: PasteEventPosting, @unchecked S
 
     func postPaste(targetPID: pid_t?) {
         postedPIDs.append(targetPID)
+    }
+}
+
+private final class CounterBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var rawValue: Int = 0
+
+    var value: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return rawValue
+    }
+
+    func increment() {
+        lock.lock()
+        rawValue += 1
+        lock.unlock()
     }
 }
 

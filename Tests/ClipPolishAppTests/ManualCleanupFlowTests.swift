@@ -27,7 +27,7 @@ struct ManualCleanupFlowTests {
     }
 
     @Test
-    func mixedRepresentationNonTextPathStillStaysNoOp() {
+    func nonTextPayloadPathStillStaysNoOp() {
         let gateway = TrackingClipboardGateway(
             payloadType: .nonText,
             plainTextSnapshot: " \u{200B}Mixed content that should remain untouched \n"

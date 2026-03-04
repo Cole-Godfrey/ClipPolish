@@ -6,7 +6,7 @@ import Testing
 @MainActor
 struct SystemPasteboardGatewayTests {
     @Test
-    func mixedRepresentationPayloadIsClassifiedAsNonText() {
+    func mixedRepresentationTextIsClassifiedAsPlainText() {
         let pasteboard = makePasteboard()
         seedMixedTextPayload(
             " \u{200B}Hello \n",
@@ -14,11 +14,11 @@ struct SystemPasteboardGatewayTests {
         )
         let gateway = SystemPasteboardGateway(pasteboard: pasteboard)
 
-        #expect(gateway.currentPayloadType() == .nonText)
+        #expect(gateway.currentPayloadType() == .plainText)
     }
 
     @Test
-    func cleanupServiceNoOpsMixedRepresentationPayloadWithoutMutation() {
+    func cleanupServiceSanitizesMixedRepresentationClipboardText() {
         let pasteboard = makePasteboard()
         seedMixedTextPayload(
             " \u{200B}Hello \n",
@@ -26,12 +26,18 @@ struct SystemPasteboardGatewayTests {
         )
         let gateway = SystemPasteboardGateway(pasteboard: pasteboard)
         let cleanupService = CleanupService(gateway: gateway, sanitizer: TextSanitizer())
-        let before = snapshot(of: pasteboard)
 
         let result = cleanupService.cleanCurrentClipboardText()
 
-        #expect(result == .noPlainText)
-        #expect(snapshot(of: pasteboard) == before)
+        switch result {
+        case .cleaned(let summary):
+            #expect(summary.scalarsRemoved == 1)
+            #expect(summary.leadingCharactersTrimmed == 1)
+            #expect(summary.trailingCharactersTrimmed == 2)
+        default:
+            Issue.record("Expected mixed text payload to be sanitized")
+        }
+        #expect(pasteboard.string(forType: .string) == "Hello")
     }
 
     @Test
@@ -59,6 +65,43 @@ struct SystemPasteboardGatewayTests {
         #expect(pasteboard.string(forType: .string) == "Hello")
     }
 
+    @Test
+    func opaqueSidecarPayloadStillClassifiesAsPlainText() {
+        let pasteboard = makePasteboard()
+        seedOpaqueSidecarPayload(
+            " \u{200B}Hello \n",
+            on: pasteboard
+        )
+        let gateway = SystemPasteboardGateway(pasteboard: pasteboard)
+        let cleanupService = CleanupService(gateway: gateway, sanitizer: TextSanitizer())
+
+        #expect(gateway.currentPayloadType() == .plainText)
+
+        let result = cleanupService.cleanCurrentClipboardText()
+
+        switch result {
+        case .cleaned(let summary):
+            #expect(summary.scalarsRemoved == 1)
+            #expect(summary.leadingCharactersTrimmed == 1)
+            #expect(summary.trailingCharactersTrimmed == 2)
+        default:
+            Issue.record("Expected opaque-sidecar text payload to be sanitized")
+        }
+        #expect(pasteboard.string(forType: .string) == "Hello")
+    }
+
+    @Test
+    func imageSidecarPayloadIsClassifiedAsNonText() {
+        let pasteboard = makePasteboard()
+        seedImageSidecarPayload(
+            " \u{200B}Hello \n",
+            on: pasteboard
+        )
+        let gateway = SystemPasteboardGateway(pasteboard: pasteboard)
+
+        #expect(gateway.currentPayloadType() == .nonText)
+    }
+
     private func makePasteboard() -> NSPasteboard {
         NSPasteboard(name: NSPasteboard.Name("clip-polish-tests-\(UUID().uuidString)"))
     }
@@ -77,26 +120,27 @@ struct SystemPasteboardGatewayTests {
         #expect(pasteboard.setString(text, forType: .string))
     }
 
-    private func snapshot(of pasteboard: NSPasteboard) -> [PasteboardItemSnapshot] {
-        (pasteboard.pasteboardItems ?? []).map { item in
-            PasteboardItemSnapshot(
-                representations: item.types.map { type in
-                    PasteboardRepresentationSnapshot(
-                        type: type.rawValue,
-                        bytes: item.data(forType: type) ?? Data()
-                    )
-                }
-                .sorted(by: { lhs, rhs in lhs.type < rhs.type })
+    private func seedOpaqueSidecarPayload(_ text: String, on pasteboard: NSPasteboard) {
+        pasteboard.clearContents()
+
+        let item = NSPasteboardItem()
+        #expect(item.setString(text, forType: .string))
+        #expect(
+            item.setData(
+                Data("opaque-sidecar".utf8),
+                forType: NSPasteboard.PasteboardType("com.clippolish.tests.opaque-sidecar")
             )
-        }
+        )
+        #expect(pasteboard.writeObjects([item]))
     }
-}
 
-private struct PasteboardItemSnapshot: Equatable {
-    let representations: [PasteboardRepresentationSnapshot]
-}
+    private func seedImageSidecarPayload(_ text: String, on pasteboard: NSPasteboard) {
+        pasteboard.clearContents()
 
-private struct PasteboardRepresentationSnapshot: Equatable {
-    let type: String
-    let bytes: Data
+        let item = NSPasteboardItem()
+        #expect(item.setString(text, forType: .string))
+        #expect(item.setData(Data([0x00, 0x11, 0x22]), forType: .png))
+        #expect(pasteboard.writeObjects([item]))
+    }
+
 }
