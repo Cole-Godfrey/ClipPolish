@@ -13,6 +13,7 @@ final class HotkeyExecutionCoordinator {
     private let smokeDiagnosticsSink: (any HotkeySmokeDiagnosticsSinking)?
     private let isHotkeyEnabledProvider: @MainActor @Sendable () -> Bool
     private let accessibilitySettingsOpener: @MainActor () -> Void
+    private let appRestarter: @MainActor () -> Void
     private let frontmostApplicationPIDProvider: @MainActor @Sendable () -> pid_t?
     private var activeExecution: Task<Void, Never>?
 
@@ -29,6 +30,40 @@ final class HotkeyExecutionCoordinator {
             }
             NSWorkspace.shared.open(settingsURL)
         },
+        appRestarter: @escaping @MainActor () -> Void = {
+            var didLaunchReplacement = false
+
+            if Bundle.main.bundleURL.pathExtension == "app" {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+                process.arguments = ["-n", Bundle.main.bundlePath]
+                do {
+                    try process.run()
+                    didLaunchReplacement = true
+                } catch {
+                    didLaunchReplacement = false
+                }
+            } else if let executableURL = Bundle.main.executableURL {
+                let process = Process()
+                process.executableURL = executableURL
+                process.arguments = Array(CommandLine.arguments.dropFirst())
+                do {
+                    try process.run()
+                    didLaunchReplacement = true
+                } catch {
+                    didLaunchReplacement = false
+                }
+            }
+
+            guard didLaunchReplacement else {
+                return
+            }
+
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                NSApplication.shared.terminate(nil)
+            }
+        },
         frontmostApplicationPIDProvider: @escaping @MainActor @Sendable () -> pid_t? = {
             NSWorkspace.shared.frontmostApplication?.processIdentifier
         }
@@ -40,6 +75,7 @@ final class HotkeyExecutionCoordinator {
         self.smokeDiagnosticsSink = smokeDiagnosticsSink
         self.isHotkeyEnabledProvider = isHotkeyEnabledProvider
         self.accessibilitySettingsOpener = accessibilitySettingsOpener
+        self.appRestarter = appRestarter
         self.frontmostApplicationPIDProvider = frontmostApplicationPIDProvider
     }
 
@@ -101,8 +137,25 @@ final class HotkeyExecutionCoordinator {
         openAccessibilitySettings()
     }
 
+    func showAccessibilityGuidanceIfNeededOnStartup() {
+        guard !permissionService.preflightPostEventAccess() else {
+            return
+        }
+
+        guard !permissionService.requestPostEventAccess() else {
+            return
+        }
+
+        statusPresenter.show(.automationPermissionRequired)
+        openAccessibilitySettings()
+    }
+
     func openAccessibilitySettings() {
         accessibilitySettingsOpener()
+    }
+
+    func restartApplication() {
+        appRestarter()
     }
 
     private static func shouldPostPaste(for cleanupResult: CleanupResult) -> Bool {

@@ -47,6 +47,10 @@ struct ClipPolishApp: App {
             executionCoordinator.runHotkeyCleanAndPaste()
         }
         settingsCoordinator.applyStoredSettings()
+        Task { @MainActor in
+            await Task.yield()
+            executionCoordinator.showAccessibilityGuidanceIfNeededOnStartup()
+        }
         hotkeySettingsCoordinator = settingsCoordinator
         initialHotkeySettings = settingsCoordinator.currentSettings()
     }
@@ -70,6 +74,9 @@ struct ClipPolishApp: App {
             },
             onOpenAccessibilitySettings: {
                 hotkeyExecutionCoordinator.openAccessibilitySettings()
+            },
+            onRestartApplication: {
+                hotkeyExecutionCoordinator.restartApplication()
             }
         )
     }

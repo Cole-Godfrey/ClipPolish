@@ -9,6 +9,7 @@ struct MenuBarAction {
     private let currentHotkeySettings: (() -> HotkeySettingsState)?
     private let requestAutomationPermission: () -> Void
     private let openAccessibilitySettings: () -> Void
+    private let restartApplication: () -> Void
 
     init(
         runManualCleanup: @escaping () -> Void,
@@ -18,7 +19,8 @@ struct MenuBarAction {
         },
         currentHotkeySettings: (() -> HotkeySettingsState)? = nil,
         requestAutomationPermission: @escaping () -> Void = {},
-        openAccessibilitySettings: @escaping () -> Void = {}
+        openAccessibilitySettings: @escaping () -> Void = {},
+        restartApplication: @escaping () -> Void = {}
     ) {
         self.runManualCleanup = runManualCleanup
         self.setHotkeyEnabled = setHotkeyEnabled
@@ -26,6 +28,7 @@ struct MenuBarAction {
         self.currentHotkeySettings = currentHotkeySettings
         self.requestAutomationPermission = requestAutomationPermission
         self.openAccessibilitySettings = openAccessibilitySettings
+        self.restartApplication = restartApplication
     }
 
     func cleanClipboardTextSelected() {
@@ -51,6 +54,10 @@ struct MenuBarAction {
     func openAccessibilitySettingsSelected() {
         openAccessibilitySettings()
     }
+
+    func restartApplicationSelected() {
+        restartApplication()
+    }
 }
 
 struct MenuBarScene: Scene {
@@ -67,7 +74,8 @@ struct MenuBarScene: Scene {
         onHotkeyShortcutChanged: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome,
         currentHotkeySettings: @escaping () -> HotkeySettingsState,
         onRequestAutomationPermission: @escaping () -> Void,
-        onOpenAccessibilitySettings: @escaping () -> Void
+        onOpenAccessibilitySettings: @escaping () -> Void,
+        onRestartApplication: @escaping () -> Void
     ) {
         self.statusPresenter = statusPresenter
         _hotkeySettings = State(initialValue: initialHotkeySettings)
@@ -78,7 +86,8 @@ struct MenuBarScene: Scene {
             setHotkeyShortcut: onHotkeyShortcutChanged,
             currentHotkeySettings: currentHotkeySettings,
             requestAutomationPermission: onRequestAutomationPermission,
-            openAccessibilitySettings: onOpenAccessibilitySettings
+            openAccessibilitySettings: onOpenAccessibilitySettings,
+            restartApplication: onRestartApplication
         )
     }
 
@@ -131,6 +140,8 @@ struct MenuBarScene: Scene {
             }
 
             Button("Clean Clipboard Text", action: menuBarAction.cleanClipboardTextSelected)
+            Divider()
+            Button("Restart ClipPolish", action: menuBarAction.restartApplicationSelected)
             Divider()
             Button("Quit") {
                 NSApplication.shared.terminate(nil)

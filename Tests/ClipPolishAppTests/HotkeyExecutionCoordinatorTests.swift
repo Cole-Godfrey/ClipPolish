@@ -310,6 +310,134 @@ struct HotkeyExecutionCoordinatorTests {
         #expect(statusPresenter.messages == [.noPlainText])
     }
 
+    @Test
+    func startupPermissionCheckPublishesGuidanceWhenAccessibilityPermissionMissing() {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: false,
+            requestResult: false,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            accessibilitySettingsOpener: {
+                eventLog.events.append(.openAccessibilitySettings)
+            }
+        )
+
+        coordinator.showAccessibilityGuidanceIfNeededOnStartup()
+
+        #expect(statusPresenter.messages == [.automationPermissionRequired])
+        #expect(
+            eventLog.events
+                == [
+                    .preflightPermission,
+                    .requestPermission,
+                    .status(.automationPermissionRequired),
+                    .openAccessibilitySettings
+                ]
+        )
+        #expect(cleanupService.callCount == 0)
+        #expect(permissionService.requestCallCount == 1)
+        #expect(pastePoster.postedPIDs.isEmpty)
+    }
+
+    @Test
+    func startupPermissionCheckIsNoOpWhenPermissionAlreadyGranted() {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: true,
+            requestResult: false,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter
+        )
+
+        coordinator.showAccessibilityGuidanceIfNeededOnStartup()
+
+        #expect(statusPresenter.messages.isEmpty)
+        #expect(eventLog.events == [.preflightPermission])
+        #expect(cleanupService.callCount == 0)
+        #expect(permissionService.requestCallCount == 0)
+        #expect(pastePoster.postedPIDs.isEmpty)
+    }
+
+    @Test
+    func startupPermissionCheckDoesNotShowGuidanceWhenPermissionRequestSucceeds() {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: false,
+            requestResult: true,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            accessibilitySettingsOpener: {
+                eventLog.events.append(.openAccessibilitySettings)
+            }
+        )
+
+        coordinator.showAccessibilityGuidanceIfNeededOnStartup()
+
+        #expect(statusPresenter.messages.isEmpty)
+        #expect(
+            eventLog.events
+                == [
+                    .preflightPermission,
+                    .requestPermission
+                ]
+        )
+        #expect(cleanupService.callCount == 0)
+        #expect(permissionService.requestCallCount == 1)
+        #expect(pastePoster.postedPIDs.isEmpty)
+    }
+
+    @Test
+    func restartApplicationInvokesConfiguredRestarterExactlyOnce() {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: true,
+            requestResult: false,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
+        let recorder = RestartInvocationRecorder()
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            appRestarter: {
+                recorder.record()
+            }
+        )
+
+        coordinator.restartApplication()
+
+        #expect(recorder.invocationCount == 1)
+    }
+
     private func drainMainActorQueue() async {
         await Task.yield()
         await Task.yield()
@@ -393,12 +521,21 @@ private final class SharedExecutionEventLog: @unchecked Sendable {
         case capturedPID(pid_t)
         case preflightPermission
         case requestPermission
+        case openAccessibilitySettings
         case cleanup
         case paste(targetPID: pid_t?)
         case status(StatusMessage)
     }
 
     var events: [Event] = []
+}
+
+private final class RestartInvocationRecorder: @unchecked Sendable {
+    private(set) var invocationCount: Int = 0
+
+    func record() {
+        invocationCount += 1
+    }
 }
 
 @MainActor

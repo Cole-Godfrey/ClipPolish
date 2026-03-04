@@ -110,6 +110,21 @@ struct MenuBarActionTests {
 
         #expect(recorder.invocationCount == 1)
     }
+
+    @Test
+    func restartApplicationCommandInvokesHandlerOnce() {
+        let recorder = InvocationRecorder()
+        let action = MenuBarAction(
+            runManualCleanup: {},
+            restartApplication: {
+                recorder.record()
+            }
+        )
+
+        action.restartApplicationSelected()
+
+        #expect(recorder.invocationCount == 1)
+    }
 }
 
 private final class InvocationRecorder: @unchecked Sendable {
