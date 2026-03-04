@@ -66,6 +66,20 @@ If `ClipPolish` is not listed in Accessibility:
 3. Trigger the hotkey once, or click `Request Accessibility Permission`.
 4. Re-check `System Settings -> Privacy & Security -> Accessibility` and enable `ClipPolish`.
 
+If hotkey still shows blocked even though `ClipPolish` is enabled:
+
+1. Quit ClipPolish.
+2. Run:
+
+```bash
+tccutil reset Accessibility com.clippolish.app
+```
+
+3. Re-open `~/Applications/ClipPolish.app`.
+4. Click `Request Accessibility Permission` in the ClipPolish menu.
+5. Re-enable ClipPolish in Accessibility if prompted.
+6. Quit and re-open ClipPolish again, then test the hotkey.
+
 Hotkey verification checklist:
 
 1. Copy text with leading/trailing spaces in any text app.
