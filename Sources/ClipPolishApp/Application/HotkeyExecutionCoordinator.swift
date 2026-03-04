@@ -16,6 +16,7 @@ final class HotkeyExecutionCoordinator {
     private let appRestarter: @MainActor () -> Void
     private let frontmostApplicationPIDProvider: @MainActor @Sendable () -> pid_t?
     private var activeExecution: Task<Void, Never>?
+    private var hasAttemptedStartupPermissionRequest = false
 
     init(
         cleanupService: any ClipboardCleanupServing,
@@ -138,6 +139,11 @@ final class HotkeyExecutionCoordinator {
     }
 
     func showAccessibilityGuidanceIfNeededOnStartup() {
+        guard !hasAttemptedStartupPermissionRequest else {
+            return
+        }
+        hasAttemptedStartupPermissionRequest = true
+
         guard !permissionService.preflightPostEventAccess() else {
             return
         }

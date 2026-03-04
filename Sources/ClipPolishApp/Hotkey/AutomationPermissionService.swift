@@ -21,14 +21,12 @@ struct AutomationPermissionService: AutomationPermissionServing {
 
     private let smokePermissionMode: SmokePermissionMode
     private let preflightPostEventAccessProvider: @Sendable () -> Bool
-    private let requestPostEventAccessProvider: @Sendable () -> Bool
     private let preflightAccessibilityTrustProvider: @Sendable () -> Bool
     private let requestAccessibilityTrustProvider: @Sendable () -> Bool
 
     init(
         environment: [String: String] = ProcessInfo.processInfo.environment,
         preflightPostEventAccessProvider: @escaping @Sendable () -> Bool = { CGPreflightPostEventAccess() },
-        requestPostEventAccessProvider: @escaping @Sendable () -> Bool = { CGRequestPostEventAccess() },
         preflightAccessibilityTrustProvider: @escaping @Sendable () -> Bool = { AXIsProcessTrusted() },
         requestAccessibilityTrustProvider: @escaping @Sendable () -> Bool = {
             let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
@@ -39,7 +37,6 @@ struct AutomationPermissionService: AutomationPermissionServing {
         let requestedMode = environment["CLIPPOLISH_SMOKE_PERMISSION_MODE"]?.lowercased()
         smokePermissionMode = smokeEnabled && requestedMode == "deny" ? .deny : .live
         self.preflightPostEventAccessProvider = preflightPostEventAccessProvider
-        self.requestPostEventAccessProvider = requestPostEventAccessProvider
         self.preflightAccessibilityTrustProvider = preflightAccessibilityTrustProvider
         self.requestAccessibilityTrustProvider = requestAccessibilityTrustProvider
     }
@@ -60,10 +57,8 @@ struct AutomationPermissionService: AutomationPermissionServing {
             return true
         }
 
-        if requestPostEventAccessProvider() {
-            return true
-        }
-
+        // Use a single prompting API per request attempt to avoid duplicate
+        // permission dialogs in one launch flow.
         if requestAccessibilityTrustProvider() {
             return true
         }

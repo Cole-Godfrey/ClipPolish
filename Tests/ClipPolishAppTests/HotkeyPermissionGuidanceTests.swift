@@ -164,7 +164,6 @@ struct HotkeyPermissionGuidanceTests {
                 quartzPreflightCallCount.increment()
                 return false
             },
-            requestPostEventAccessProvider: { false },
             preflightAccessibilityTrustProvider: {
                 axPreflightCallCount.increment()
                 return true
@@ -178,16 +177,11 @@ struct HotkeyPermissionGuidanceTests {
     }
 
     @Test
-    func automationPermissionServiceRequestFallsBackToAXPromptWhenQuartzRequestFails() {
-        let quartzRequestCallCount = CounterBox()
+    func automationPermissionServiceRequestUsesSingleAXPromptAttempt() {
         let axRequestCallCount = CounterBox()
         let service = AutomationPermissionService(
             environment: [:],
             preflightPostEventAccessProvider: { false },
-            requestPostEventAccessProvider: {
-                quartzRequestCallCount.increment()
-                return false
-            },
             preflightAccessibilityTrustProvider: { false },
             requestAccessibilityTrustProvider: {
                 axRequestCallCount.increment()
@@ -196,7 +190,6 @@ struct HotkeyPermissionGuidanceTests {
         )
 
         #expect(service.requestPostEventAccess() == true)
-        #expect(quartzRequestCallCount.value == 1)
         #expect(axRequestCallCount.value == 1)
     }
 

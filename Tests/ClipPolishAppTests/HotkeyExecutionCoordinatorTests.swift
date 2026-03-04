@@ -412,6 +412,45 @@ struct HotkeyExecutionCoordinatorTests {
     }
 
     @Test
+    func startupPermissionCheckRunsAtMostOncePerLaunch() {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: false,
+            requestResult: false,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            accessibilitySettingsOpener: {
+                eventLog.events.append(.openAccessibilitySettings)
+            }
+        )
+
+        coordinator.showAccessibilityGuidanceIfNeededOnStartup()
+        coordinator.showAccessibilityGuidanceIfNeededOnStartup()
+
+        #expect(statusPresenter.messages == [.automationPermissionRequired])
+        #expect(
+            eventLog.events
+                == [
+                    .preflightPermission,
+                    .requestPermission,
+                    .status(.automationPermissionRequired),
+                    .openAccessibilitySettings
+                ]
+        )
+        #expect(permissionService.requestCallCount == 1)
+        #expect(cleanupService.callCount == 0)
+        #expect(pastePoster.postedPIDs.isEmpty)
+    }
+
+    @Test
     func restartApplicationInvokesConfiguredRestarterExactlyOnce() {
         let eventLog = SharedExecutionEventLog()
         let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
