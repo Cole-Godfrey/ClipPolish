@@ -6,6 +6,88 @@ import Testing
 @MainActor
 struct HotkeyExecutionCoordinatorTests {
     @Test
+    func disabledStateSkipsPermissionCleanupAndPasteWork() async {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: true,
+            requestResult: true,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            isHotkeyEnabledProvider: {
+                eventLog.events.append(.enabledCheck(false))
+                return false
+            },
+            frontmostApplicationPIDProvider: {
+                eventLog.events.append(.capturedPID(919))
+                return 919
+            }
+        )
+
+        coordinator.runHotkeyCleanAndPaste()
+        await drainMainActorQueue()
+
+        #expect(cleanupService.callCount == 0)
+        #expect(permissionService.requestCallCount == 0)
+        #expect(pastePoster.postedPIDs.isEmpty)
+        #expect(statusPresenter.messages.isEmpty)
+        #expect(eventLog.events == [.enabledCheck(false)])
+    }
+
+    @Test
+    func enabledStateStillRunsExistingPermissionAndCleanupFlow() async {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: true,
+            requestResult: false,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let statusPresenter = SpyStatusPresenter(eventLog: eventLog)
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            isHotkeyEnabledProvider: {
+                eventLog.events.append(.enabledCheck(true))
+                return true
+            },
+            frontmostApplicationPIDProvider: {
+                eventLog.events.append(.capturedPID(707))
+                return 707
+            }
+        )
+
+        coordinator.runHotkeyCleanAndPaste()
+        await drainMainActorQueue()
+
+        #expect(cleanupService.callCount == 1)
+        #expect(permissionService.requestCallCount == 0)
+        #expect(pastePoster.postedPIDs == [707])
+        #expect(statusPresenter.messages == [.alreadyClean])
+        #expect(
+            eventLog.events
+                == [
+                    .enabledCheck(true),
+                    .capturedPID(707),
+                    .preflightPermission,
+                    .cleanup,
+                    .paste(targetPID: 707),
+                    .status(.alreadyClean)
+                ]
+        )
+    }
+
+    @Test
     func permissionUnavailableRequestsAccessThenShortCircuitsWhenStillDenied() async {
         let eventLog = SharedExecutionEventLog()
         let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
@@ -267,6 +349,7 @@ private final class SpyStatusPresenter: StatusMessagePresenting {
 
 private final class SharedExecutionEventLog: @unchecked Sendable {
     enum Event: Equatable {
+        case enabledCheck(Bool)
         case capturedPID(pid_t)
         case preflightPermission
         case requestPermission

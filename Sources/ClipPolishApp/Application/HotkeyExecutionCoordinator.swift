@@ -10,6 +10,7 @@ final class HotkeyExecutionCoordinator {
     private let permissionService: any AutomationPermissionServing
     private let pastePoster: any PasteEventPosting
     private let statusPresenter: any StatusMessagePresenting
+    private let isHotkeyEnabledProvider: @MainActor @Sendable () -> Bool
     private let accessibilitySettingsOpener: @MainActor () -> Void
     private let frontmostApplicationPIDProvider: @MainActor @Sendable () -> pid_t?
     private var activeExecution: Task<Void, Never>?
@@ -19,6 +20,7 @@ final class HotkeyExecutionCoordinator {
         permissionService: any AutomationPermissionServing,
         pastePoster: any PasteEventPosting,
         statusPresenter: any StatusMessagePresenting,
+        isHotkeyEnabledProvider: @escaping @MainActor @Sendable () -> Bool = { true },
         accessibilitySettingsOpener: @escaping @MainActor () -> Void = {
             guard let settingsURL = URL(string: HotkeyExecutionCoordinator.accessibilitySettingsURLString) else {
                 return
@@ -33,12 +35,17 @@ final class HotkeyExecutionCoordinator {
         self.permissionService = permissionService
         self.pastePoster = pastePoster
         self.statusPresenter = statusPresenter
+        self.isHotkeyEnabledProvider = isHotkeyEnabledProvider
         self.accessibilitySettingsOpener = accessibilitySettingsOpener
         self.frontmostApplicationPIDProvider = frontmostApplicationPIDProvider
     }
 
     func runHotkeyCleanAndPaste() {
         guard activeExecution == nil else {
+            return
+        }
+
+        guard isHotkeyEnabledProvider() else {
             return
         }
 
