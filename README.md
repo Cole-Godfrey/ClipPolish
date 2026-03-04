@@ -121,7 +121,7 @@ ClipPolish releases are source-first. Users install from source with `bash scrip
 
 ```bash
 swift test
-make verify-phase3-hotkey-execution
+make verify-phase5-mixed-payload
 ```
 
 When changing install scripts, also validate:

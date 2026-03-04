@@ -13,7 +13,7 @@ Describe what changed and why.
 ## Validation
 
 - [ ] `swift test`
-- [ ] `make verify-phase3-hotkey-execution`
+- [ ] `make verify-phase5-mixed-payload`
 - [ ] Added/updated tests for behavior changes
 - [ ] If install/release scripts changed: `bash -n scripts/install-app.sh`, `bash -n scripts/install-dev-app.sh`
 

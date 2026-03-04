@@ -5,7 +5,7 @@ All pull requests must satisfy the following before merge.
 ## Required Checks
 
 1. `swift test` passes.
-2. `make verify-phase3-hotkey-execution` passes.
+2. `make verify-phase5-mixed-payload` passes.
 3. No new safety denylist violations are introduced.
 4. User-visible changes include tests and changelog updates.
 5. If install/release scripts changed, shell syntax checks pass:
