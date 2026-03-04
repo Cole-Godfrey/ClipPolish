@@ -118,6 +118,45 @@ struct HotkeyMenuIntegrationTests {
     }
 
     @Test
+    func relaunchBootstrapWithDisabledPersistedShortcutKeepsRuntimeInactive() {
+        let suiteName = "HotkeyMenuIntegrationTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let selectedShortcut = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .shift, .option])
+        HotkeyPreferencesStore(userDefaults: defaults).save(
+            HotkeyPreferences(
+                isEnabled: false,
+                shortcut: selectedShortcut
+            )
+        )
+
+        let relaunchedStore = HotkeyPreferencesStore(userDefaults: defaults)
+        let relaunchedService = StubGlobalHotkeyService()
+        let relaunchedCoordinator = HotkeySettingsCoordinator(
+            store: relaunchedStore,
+            hotkeyService: relaunchedService
+        )
+
+        relaunchedCoordinator.applyStoredSettings()
+        let restored = relaunchedCoordinator.currentSettings()
+
+        #expect(restored.isEnabled == false)
+        #expect(restored.shortcut == selectedShortcut)
+        #expect(
+            relaunchedService.applyCalls
+                == [
+                    .init(
+                        isEnabled: false,
+                        shortcut: selectedShortcut
+                    )
+                ]
+        )
+    }
+
+    @Test
     func statusTextIsAlwaysDerivableFromCurrentSettingsState() {
         let disabledStateText = HotkeySettingsState(
             isEnabled: false,
