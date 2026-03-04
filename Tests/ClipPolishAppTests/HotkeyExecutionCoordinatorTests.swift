@@ -128,6 +128,46 @@ struct HotkeyExecutionCoordinatorTests {
     }
 
     @Test
+    func smokeDiagnosticsEmitDeniedPermissionAndNoSideEffectSignalsWhenConfigured() async {
+        let eventLog = SharedExecutionEventLog()
+        let cleanupService = StubCleanupService(result: .alreadyClean, eventLog: eventLog)
+        let permissionService = StubAutomationPermissionService(
+            preflightResult: false,
+            requestResult: false,
+            eventLog: eventLog
+        )
+        let pastePoster = SpyPasteEventPoster(eventLog: eventLog)
+        let smokeDiagnostics = CollectingSmokeDiagnosticsSink()
+        let statusPresenter = StatusPresenter(
+            displayDurationNanoseconds: 100_000_000,
+            smokeDiagnosticsSink: smokeDiagnostics
+        )
+        let coordinator = HotkeyExecutionCoordinator(
+            cleanupService: cleanupService,
+            permissionService: permissionService,
+            pastePoster: pastePoster,
+            statusPresenter: statusPresenter,
+            smokeDiagnosticsSink: smokeDiagnostics,
+            frontmostApplicationPIDProvider: { 302 }
+        )
+
+        coordinator.runHotkeyCleanAndPaste()
+        await drainMainActorQueue()
+
+        #expect(cleanupService.callCount == 0)
+        #expect(pastePoster.postedPIDs.isEmpty)
+        #expect(
+            smokeDiagnostics.events
+                == [
+                    "hotkey.permission=denied",
+                    "hotkey.cleanup=skipped",
+                    "hotkey.paste=skipped",
+                    "hotkey.status=automationPermissionRequired"
+                ]
+        )
+    }
+
+    @Test
     func permissionRequestGrantedOnHotkeyPathRunsCleanupAndPaste() async {
         let eventLog = SharedExecutionEventLog()
         let cleanupService = StubCleanupService(
@@ -359,4 +399,13 @@ private final class SharedExecutionEventLog: @unchecked Sendable {
     }
 
     var events: [Event] = []
+}
+
+@MainActor
+private final class CollectingSmokeDiagnosticsSink: HotkeySmokeDiagnosticsSinking {
+    private(set) var events: [String] = []
+
+    func record(event: String) {
+        events.append(event)
+    }
 }

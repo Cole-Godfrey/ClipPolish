@@ -141,6 +141,38 @@ struct HotkeyPermissionGuidanceTests {
         #expect(statusPresenter.messages.last?.displayText.contains("clipboard") == false)
     }
 
+    @Test
+    func automationPermissionServiceForcesDeniedWhenSmokeModeRequestsIt() {
+        let service = AutomationPermissionService(
+            environment: [
+                "CLIPPOLISH_RUN_HOTKEY_E2E": "1",
+                "CLIPPOLISH_SMOKE_PERMISSION_MODE": "deny"
+            ]
+        )
+
+        #expect(service.preflightPostEventAccess() == false)
+        #expect(service.requestPostEventAccess() == false)
+    }
+
+    @Test
+    func smokeDiagnosticsSinkRequiresExplicitOptInEnvironment() {
+        #expect(
+            HotkeySmokeDiagnosticsFileSink(
+                environment: [
+                    "CLIPPOLISH_SMOKE_EVENT_LOG_PATH": "/tmp/clip-polish-smoke.log"
+                ]
+            ) == nil
+        )
+        #expect(
+            HotkeySmokeDiagnosticsFileSink(
+                environment: [
+                    "CLIPPOLISH_RUN_HOTKEY_E2E": "1",
+                    "CLIPPOLISH_SMOKE_EVENT_LOG_PATH": "/tmp/clip-polish-smoke.log"
+                ]
+            ) != nil
+        )
+    }
+
     private func drainMainActorQueue() async {
         await Task.yield()
         await Task.yield()
