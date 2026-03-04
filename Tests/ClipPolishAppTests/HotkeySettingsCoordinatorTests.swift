@@ -74,6 +74,84 @@ struct HotkeySettingsCoordinatorTests {
     }
 
     @Test
+    func acceptedShortcutWhileDisabledPersistsAndUnregistersRuntime() {
+        let eventLog = SharedEventLog()
+        let configuredShortcut = KeyboardShortcuts.Shortcut(.k, modifiers: [.command, .option])
+        let store = InMemoryHotkeyPreferencesStore(
+            initial: HotkeyPreferences(isEnabled: false, shortcut: configuredShortcut),
+            eventLog: eventLog
+        )
+        let service = RecordingGlobalHotkeyService(eventLog: eventLog)
+        let coordinator = HotkeySettingsCoordinator(
+            store: store,
+            hotkeyService: service
+        )
+        let replacementShortcut = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .shift, .option])
+
+        let outcome = coordinator.setShortcut(replacementShortcut)
+
+        #expect(outcome == .accepted)
+        #expect(store.current.isEnabled == false)
+        #expect(store.current.shortcut == replacementShortcut)
+        #expect(service.registeredShortcuts.isEmpty)
+        #expect(service.unregisterCallCount == 1)
+        #expect(
+            eventLog.events
+                == [
+                    .setShortcut(replacementShortcut),
+                    .unregister
+                ]
+        )
+    }
+
+    @Test
+    func acceptedShortcutWhileEnabledPersistsAndRegistersRuntime() {
+        let eventLog = SharedEventLog()
+        let configuredShortcut = KeyboardShortcuts.Shortcut(.k, modifiers: [.command, .option])
+        let store = InMemoryHotkeyPreferencesStore(
+            initial: HotkeyPreferences(isEnabled: true, shortcut: configuredShortcut),
+            eventLog: eventLog
+        )
+        let service = RecordingGlobalHotkeyService(eventLog: eventLog)
+        let coordinator = HotkeySettingsCoordinator(
+            store: store,
+            hotkeyService: service
+        )
+        let replacementShortcut = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .shift, .option])
+
+        let outcome = coordinator.setShortcut(replacementShortcut)
+
+        #expect(outcome == .accepted)
+        #expect(store.current.isEnabled)
+        #expect(store.current.shortcut == replacementShortcut)
+        #expect(service.registeredShortcuts == [replacementShortcut])
+        #expect(service.unregisterCallCount == 0)
+    }
+
+    @Test
+    func applyStoredSettingsWithDisabledPersistedShortcutKeepsRuntimeInactive() {
+        let eventLog = SharedEventLog()
+        let configuredShortcut = KeyboardShortcuts.Shortcut(.k, modifiers: [.command, .option])
+        let store = InMemoryHotkeyPreferencesStore(
+            initial: HotkeyPreferences(isEnabled: false, shortcut: configuredShortcut),
+            eventLog: eventLog
+        )
+        let service = RecordingGlobalHotkeyService(eventLog: eventLog)
+        let coordinator = HotkeySettingsCoordinator(
+            store: store,
+            hotkeyService: service
+        )
+
+        coordinator.applyStoredSettings()
+
+        #expect(service.applyInvocations.count == 1)
+        #expect(service.applyInvocations[0].isEnabled == false)
+        #expect(service.applyInvocations[0].shortcut == configuredShortcut)
+        #expect(service.registeredShortcuts.isEmpty)
+        #expect(service.unregisterCallCount == 1)
+    }
+
+    @Test
     func blockedConflictReturnsOutcomeAndKeepsPersistedShortcutUnchanged() {
         let eventLog = SharedEventLog()
         let existingShortcut = KeyboardShortcuts.Shortcut(.c, modifiers: [.command, .shift])
@@ -168,6 +246,7 @@ private final class RecordingGlobalHotkeyService: GlobalHotkeyServing, @unchecke
     private let eventLog: SharedEventLog
     private(set) var registeredShortcuts: [KeyboardShortcuts.Shortcut] = []
     private(set) var unregisterCallCount: Int = 0
+    private(set) var applyInvocations: [(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?)] = []
     var validationResult: HotkeyShortcutValidationResult = .accepted
 
     init(eventLog: SharedEventLog) {
@@ -185,11 +264,21 @@ private final class RecordingGlobalHotkeyService: GlobalHotkeyServing, @unchecke
 
     func unregister() {
         unregisterCallCount += 1
+        eventLog.events.append(.unregister)
     }
 
     func bindHotkeyHandler(_ handler: @escaping @MainActor @Sendable () -> Void) {}
 
-    func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?) {}
+    func apply(isEnabled: Bool, shortcut: KeyboardShortcuts.Shortcut?) {
+        applyInvocations.append((isEnabled: isEnabled, shortcut: shortcut))
+
+        guard isEnabled, let shortcut else {
+            unregister()
+            return
+        }
+
+        register(shortcut: shortcut)
+    }
 
     func validate(shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutValidationResult {
         validationResult
@@ -201,6 +290,7 @@ private final class SharedEventLog: @unchecked Sendable {
         case setEnabled(Bool)
         case setShortcut(KeyboardShortcuts.Shortcut)
         case register(KeyboardShortcuts.Shortcut)
+        case unregister
     }
 
     var events: [Event] = []

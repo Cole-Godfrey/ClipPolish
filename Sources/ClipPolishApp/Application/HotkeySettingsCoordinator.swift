@@ -71,10 +71,11 @@ final class HotkeySettingsCoordinator {
         switch hotkeyService.validate(shortcut: shortcut) {
         case .accepted:
             store.setShortcut(shortcut)
-
-            if store.load().isEnabled {
-                hotkeyService.register(shortcut: shortcut)
-            }
+            let preferences = store.load()
+            hotkeyService.apply(
+                isEnabled: preferences.isEnabled,
+                shortcut: preferences.shortcut
+            )
 
             return .accepted
         case .blockedConflict(let suggestions):
