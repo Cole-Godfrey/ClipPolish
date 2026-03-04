@@ -1,5 +1,6 @@
 import AppKit
 import ClipPolishCore
+import UniformTypeIdentifiers
 
 enum SystemPasteboardGatewayError: Error {
     case readFailed
@@ -15,7 +16,7 @@ final class SystemPasteboardGateway: ClipboardGateway, @unchecked Sendable {
     }
 
     func currentPayloadType() -> ClipboardPayloadType {
-        pasteboard.string(forType: .string) == nil ? .nonText : .plainText
+        isPlainTextOnlyPayload() ? .plainText : .nonText
     }
 
     func readPlainText() throws -> String {
@@ -26,7 +27,10 @@ final class SystemPasteboardGateway: ClipboardGateway, @unchecked Sendable {
     }
 
     func writePlainText(_ text: String, onlyIfCurrentMatches expectedCurrentText: String) throws {
-        guard pasteboard.string(forType: .string) == expectedCurrentText else {
+        guard
+            isPlainTextOnlyPayload(),
+            pasteboard.string(forType: .string) == expectedCurrentText
+        else {
             throw SystemPasteboardGatewayError.clipboardChanged
         }
 
@@ -34,5 +38,31 @@ final class SystemPasteboardGateway: ClipboardGateway, @unchecked Sendable {
         guard pasteboard.setString(text, forType: .string) else {
             throw SystemPasteboardGatewayError.writeFailed
         }
+    }
+
+    private func isPlainTextOnlyPayload() -> Bool {
+        guard
+            let items = pasteboard.pasteboardItems,
+            items.count == 1,
+            let item = items.first
+        else {
+            return false
+        }
+
+        let types = item.types
+        guard
+            !types.isEmpty,
+            types.allSatisfy({ type in
+                guard let resolvedType = UTType(type.rawValue) else {
+                    return false
+                }
+                return resolvedType.conforms(to: .plainText)
+            }),
+            pasteboard.string(forType: .string) != nil
+        else {
+            return false
+        }
+
+        return true
     }
 }
