@@ -54,6 +54,9 @@ struct ClipPolishApp: App {
             onHotkeyShortcutChanged: { shortcut in
                 hotkeySettingsCoordinator.setShortcut(shortcut)
             },
+            currentHotkeySettings: {
+                hotkeySettingsCoordinator.currentSettings()
+            },
             onRequestAutomationPermission: {
                 hotkeyExecutionCoordinator.requestAutomationPermissionIfNeeded()
             },

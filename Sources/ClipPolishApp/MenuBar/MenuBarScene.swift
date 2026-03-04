@@ -6,6 +6,7 @@ struct MenuBarAction {
     private let runManualCleanup: () -> Void
     private let setHotkeyEnabled: (Bool) -> Void
     private let setHotkeyShortcut: (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome
+    private let currentHotkeySettings: (() -> HotkeySettingsState)?
     private let requestAutomationPermission: () -> Void
     private let openAccessibilitySettings: () -> Void
 
@@ -15,12 +16,14 @@ struct MenuBarAction {
         setHotkeyShortcut: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome = { shortcut in
             shortcut == nil ? .invalidShortcut : .accepted
         },
+        currentHotkeySettings: (() -> HotkeySettingsState)? = nil,
         requestAutomationPermission: @escaping () -> Void = {},
         openAccessibilitySettings: @escaping () -> Void = {}
     ) {
         self.runManualCleanup = runManualCleanup
         self.setHotkeyEnabled = setHotkeyEnabled
         self.setHotkeyShortcut = setHotkeyShortcut
+        self.currentHotkeySettings = currentHotkeySettings
         self.requestAutomationPermission = requestAutomationPermission
         self.openAccessibilitySettings = openAccessibilitySettings
     }
@@ -35,6 +38,10 @@ struct MenuBarAction {
 
     func hotkeyShortcutChanged(_ shortcut: KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome {
         setHotkeyShortcut(shortcut)
+    }
+
+    func refreshedHotkeySettings() -> HotkeySettingsState? {
+        currentHotkeySettings?()
     }
 
     func requestAutomationPermissionSelected() {
@@ -58,6 +65,7 @@ struct MenuBarScene: Scene {
         onCleanClipboardText: @escaping () -> Void,
         onHotkeyEnabledChanged: @escaping (Bool) -> Void,
         onHotkeyShortcutChanged: @escaping (KeyboardShortcuts.Shortcut?) -> HotkeyShortcutUpdateOutcome,
+        currentHotkeySettings: @escaping () -> HotkeySettingsState,
         onRequestAutomationPermission: @escaping () -> Void,
         onOpenAccessibilitySettings: @escaping () -> Void
     ) {
@@ -68,10 +76,10 @@ struct MenuBarScene: Scene {
             runManualCleanup: onCleanClipboardText,
             setHotkeyEnabled: onHotkeyEnabledChanged,
             setHotkeyShortcut: onHotkeyShortcutChanged,
+            currentHotkeySettings: currentHotkeySettings,
             requestAutomationPermission: onRequestAutomationPermission,
             openAccessibilitySettings: onOpenAccessibilitySettings
         )
-        KeyboardShortcuts.setShortcut(initialHotkeySettings.shortcut, for: HotkeyShortcutName.cleanAndPaste)
     }
 
     var body: some Scene {
@@ -134,35 +142,40 @@ struct MenuBarScene: Scene {
         Binding(
             get: { hotkeySettings.isEnabled },
             set: { isEnabled in
-                hotkeySettings.isEnabled = isEnabled
                 hotkeyHelperMessage = nil
 
-                if isEnabled, hotkeySettings.shortcut == nil {
-                    let defaultShortcut = HotkeyPreferenceDefaults.defaultShortcut
-                    hotkeySettings.shortcut = defaultShortcut
-                    KeyboardShortcuts.setShortcut(defaultShortcut, for: HotkeyShortcutName.cleanAndPaste)
-                }
-
                 menuBarAction.hotkeyEnabledChanged(isEnabled)
+                hotkeySettings = menuBarAction.refreshedHotkeySettings()
+                    ?? HotkeySettingsState(
+                        isEnabled: isEnabled,
+                        shortcut: hotkeySettings.shortcut
+                    )
             }
         )
     }
 
     private func handleRecorderChange(_ shortcut: KeyboardShortcuts.Shortcut?) {
-        let previousShortcut = hotkeySettings.shortcut
         let outcome = menuBarAction.hotkeyShortcutChanged(shortcut)
 
         switch outcome {
         case .accepted:
-            hotkeySettings.shortcut = shortcut
+            hotkeySettings = menuBarAction.refreshedHotkeySettings()
+                ?? HotkeySettingsState(
+                    isEnabled: hotkeySettings.isEnabled,
+                    shortcut: shortcut
+                )
             hotkeyHelperMessage = nil
         case .blockedConflict(let suggestions):
             let suggestion = suggestions.first.map { " Suggested: \($0)." } ?? ""
             hotkeyHelperMessage = "Shortcut is unavailable.\(suggestion)"
-            KeyboardShortcuts.setShortcut(previousShortcut, for: HotkeyShortcutName.cleanAndPaste)
+            if let refreshed = menuBarAction.refreshedHotkeySettings() {
+                hotkeySettings = refreshed
+            }
         case .invalidShortcut:
             hotkeyHelperMessage = "Shortcut must include one or more modifiers."
-            KeyboardShortcuts.setShortcut(previousShortcut, for: HotkeyShortcutName.cleanAndPaste)
+            if let refreshed = menuBarAction.refreshedHotkeySettings() {
+                hotkeySettings = refreshed
+            }
         }
     }
 }
