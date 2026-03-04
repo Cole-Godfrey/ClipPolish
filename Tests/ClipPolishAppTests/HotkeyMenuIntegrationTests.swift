@@ -284,6 +284,13 @@ private final class StubGlobalHotkeyService: GlobalHotkeyServing, @unchecked Sen
                 shortcut: shortcut
             )
         )
+
+        guard isEnabled, let shortcut else {
+            unregister()
+            return
+        }
+
+        register(shortcut: shortcut)
     }
 
     func validate(shortcut: KeyboardShortcuts.Shortcut) -> HotkeyShortcutValidationResult {
