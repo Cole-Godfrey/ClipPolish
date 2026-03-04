@@ -152,7 +152,7 @@ struct HotkeySettingsCoordinatorTests {
     }
 
     @Test
-    func blockedConflictReturnsOutcomeAndKeepsPersistedShortcutUnchanged() {
+    func blockedConflictKeepsPersistedShortcutAndReconcilesRuntimeFromStore() {
         let eventLog = SharedEventLog()
         let existingShortcut = KeyboardShortcuts.Shortcut(.c, modifiers: [.command, .shift])
         let proposedShortcut = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .shift])
@@ -183,11 +183,48 @@ struct HotkeySettingsCoordinatorTests {
             )
         )
         #expect(store.current.shortcut == existingShortcut)
-        #expect(service.registeredShortcuts.isEmpty)
+        #expect(service.applyInvocations.count == 1)
+        #expect(service.applyInvocations[0].isEnabled)
+        #expect(service.applyInvocations[0].shortcut == existingShortcut)
+        #expect(service.registeredShortcuts == [existingShortcut])
     }
 
     @Test
-    func invalidShortcutReturnsOutcomeAndSkipsPersistence() {
+    func blockedConflictWithEmptySuggestionsUsesDefaultListAndReconcilesRuntime() {
+        let eventLog = SharedEventLog()
+        let existingShortcut = KeyboardShortcuts.Shortcut(.k, modifiers: [.command, .option])
+        let proposedShortcut = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .shift])
+        let store = InMemoryHotkeyPreferencesStore(
+            initial: HotkeyPreferences(isEnabled: true, shortcut: existingShortcut),
+            eventLog: eventLog
+        )
+        let service = RecordingGlobalHotkeyService(eventLog: eventLog)
+        service.validationResult = .blockedConflict(suggestions: [])
+        let coordinator = HotkeySettingsCoordinator(
+            store: store,
+            hotkeyService: service
+        )
+
+        let outcome = coordinator.setShortcut(proposedShortcut)
+
+        #expect(
+            outcome == .blockedConflict(
+                suggestions: [
+                    "Try Command-Shift-Option-V",
+                    "Try Command-Option-V",
+                    "Try Control-Shift-V"
+                ]
+            )
+        )
+        #expect(store.current.shortcut == existingShortcut)
+        #expect(service.applyInvocations.count == 1)
+        #expect(service.applyInvocations[0].isEnabled)
+        #expect(service.applyInvocations[0].shortcut == existingShortcut)
+        #expect(service.registeredShortcuts == [existingShortcut])
+    }
+
+    @Test
+    func invalidShortcutKeepsPersistedShortcutAndReconcilesRuntimeFromStore() {
         let eventLog = SharedEventLog()
         let existingShortcut = KeyboardShortcuts.Shortcut(.c, modifiers: [.command, .shift])
         let proposedShortcut = KeyboardShortcuts.Shortcut(.v, modifiers: [.command])
@@ -206,7 +243,10 @@ struct HotkeySettingsCoordinatorTests {
 
         #expect(outcome == .invalidShortcut)
         #expect(store.current.shortcut == existingShortcut)
-        #expect(service.registeredShortcuts.isEmpty)
+        #expect(service.applyInvocations.count == 1)
+        #expect(service.applyInvocations[0].isEnabled)
+        #expect(service.applyInvocations[0].shortcut == existingShortcut)
+        #expect(service.registeredShortcuts == [existingShortcut])
     }
 }
 
