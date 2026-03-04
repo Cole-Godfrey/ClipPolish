@@ -121,8 +121,20 @@ ClipPolish releases are source-first. Users install from source with `bash scrip
 
 ```bash
 swift test
-make verify-phase6-hotkey-conflict
+make verify-phase7-hotkey-e2e
 ```
+
+Phase 7 verification policy:
+- `make verify-phase7-hotkey-e2e` is the default deterministic command. It runs phase-7 core invariants/hotkey tests and chains prior phase verification (`verify-phase6-hotkey-conflict` and below).
+- `make verify-phase7-hotkey-smoke` is optional process-level smoke validation for real app-process hotkey behavior (relaunch, permission denied, mixed-payload no-op).
+- Smoke runs only when explicitly opted in:
+
+```bash
+CLIPPOLISH_RUN_HOTKEY_E2E=1 make verify-phase7-hotkey-smoke
+```
+
+- `SKIP:` output from the smoke harness is expected in CI or non-Aqua sessions (for example: headless shells, missing GUI permissions, or missing installed app bundle path).
+- Smoke assertions fail only when execution actually runs and a scenario expectation is violated.
 
 When changing install scripts, also validate:
 

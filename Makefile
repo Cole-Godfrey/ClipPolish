@@ -1,4 +1,4 @@
-.PHONY: verify-phase1-safety verify-phase2-hotkey-controls verify-phase3-hotkey-execution verify-phase4-hotkey-disabled-state verify-phase5-mixed-payload verify-phase6-hotkey-conflict install-app
+.PHONY: verify-phase1-safety verify-phase2-hotkey-controls verify-phase3-hotkey-execution verify-phase4-hotkey-disabled-state verify-phase5-mixed-payload verify-phase6-hotkey-conflict verify-phase7-hotkey-e2e verify-phase7-hotkey-smoke install-app
 
 verify-phase1-safety:
 	swift test --filter ClipboardNoOpSafetyTests
@@ -31,6 +31,16 @@ verify-phase6-hotkey-conflict:
 	swift test --filter HotkeySettingsCoordinatorTests
 	swift test --filter HotkeyMenuIntegrationTests
 	$(MAKE) verify-phase5-mixed-payload
+
+verify-phase7-hotkey-e2e:
+	swift test --filter CoreBaselineInvariantTests
+	swift test --filter CleanupServiceTests
+	swift test --filter HotkeyExecutionCoordinatorTests
+	swift test --filter HotkeyPermissionGuidanceTests
+	$(MAKE) verify-phase6-hotkey-conflict
+
+verify-phase7-hotkey-smoke:
+	bash scripts/verify-hotkey-smoke.sh
 
 install-app:
 	bash scripts/install-app.sh
