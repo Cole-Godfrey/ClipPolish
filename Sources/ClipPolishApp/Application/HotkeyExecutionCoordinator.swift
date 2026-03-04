@@ -10,6 +10,7 @@ final class HotkeyExecutionCoordinator {
     private let permissionService: any AutomationPermissionServing
     private let pastePoster: any PasteEventPosting
     private let statusPresenter: any StatusMessagePresenting
+    private let smokeDiagnosticsSink: (any HotkeySmokeDiagnosticsSinking)?
     private let isHotkeyEnabledProvider: @MainActor @Sendable () -> Bool
     private let accessibilitySettingsOpener: @MainActor () -> Void
     private let frontmostApplicationPIDProvider: @MainActor @Sendable () -> pid_t?
@@ -20,6 +21,7 @@ final class HotkeyExecutionCoordinator {
         permissionService: any AutomationPermissionServing,
         pastePoster: any PasteEventPosting,
         statusPresenter: any StatusMessagePresenting,
+        smokeDiagnosticsSink: (any HotkeySmokeDiagnosticsSinking)? = nil,
         isHotkeyEnabledProvider: @escaping @MainActor @Sendable () -> Bool = { true },
         accessibilitySettingsOpener: @escaping @MainActor () -> Void = {
             guard let settingsURL = URL(string: HotkeyExecutionCoordinator.accessibilitySettingsURLString) else {
@@ -35,6 +37,7 @@ final class HotkeyExecutionCoordinator {
         self.permissionService = permissionService
         self.pastePoster = pastePoster
         self.statusPresenter = statusPresenter
+        self.smokeDiagnosticsSink = smokeDiagnosticsSink
         self.isHotkeyEnabledProvider = isHotkeyEnabledProvider
         self.accessibilitySettingsOpener = accessibilitySettingsOpener
         self.frontmostApplicationPIDProvider = frontmostApplicationPIDProvider
@@ -52,10 +55,15 @@ final class HotkeyExecutionCoordinator {
         let targetPID = frontmostApplicationPIDProvider()
         if !permissionService.preflightPostEventAccess() {
             guard permissionService.requestPostEventAccess() else {
+                smokeDiagnosticsSink?.record(event: "hotkey.permission=denied")
+                smokeDiagnosticsSink?.record(event: "hotkey.cleanup=skipped")
+                smokeDiagnosticsSink?.record(event: "hotkey.paste=skipped")
                 statusPresenter.show(.automationPermissionRequired)
                 return
             }
         }
+
+        smokeDiagnosticsSink?.record(event: "hotkey.permission=granted")
 
         activeExecution = Task { @MainActor [self, targetPID] in
             defer {
@@ -63,9 +71,13 @@ final class HotkeyExecutionCoordinator {
             }
 
             let cleanupResult = cleanupService.cleanCurrentClipboardText()
-            if Self.shouldPostPaste(for: cleanupResult) {
+            smokeDiagnosticsSink?.record(event: "hotkey.cleanup=\(Self.smokeCleanupToken(for: cleanupResult))")
+
+            let shouldPostPaste = Self.shouldPostPaste(for: cleanupResult)
+            if shouldPostPaste {
                 pastePoster.postPaste(targetPID: targetPID)
             }
+            smokeDiagnosticsSink?.record(event: shouldPostPaste ? "hotkey.paste=posted" : "hotkey.paste=skipped")
             statusPresenter.show(.fromCleanupResult(cleanupResult))
         }
     }
@@ -99,6 +111,21 @@ final class HotkeyExecutionCoordinator {
             return true
         case .noPlainText, .clipboardReadFailed, .clipboardWriteFailed:
             return false
+        }
+    }
+
+    private static func smokeCleanupToken(for cleanupResult: CleanupResult) -> String {
+        switch cleanupResult {
+        case .cleaned:
+            return "cleaned"
+        case .alreadyClean:
+            return "alreadyClean"
+        case .noPlainText:
+            return "noPlainText"
+        case .clipboardReadFailed:
+            return "clipboardReadFailed"
+        case .clipboardWriteFailed:
+            return "clipboardWriteFailed"
         }
     }
 }

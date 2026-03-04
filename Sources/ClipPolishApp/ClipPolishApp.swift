@@ -1,4 +1,5 @@
 import ClipPolishCore
+import Foundation
 import SwiftUI
 
 @main
@@ -10,7 +11,9 @@ struct ClipPolishApp: App {
     private let initialHotkeySettings: HotkeySettingsState
 
     init() {
-        let presenter = StatusPresenter()
+        let environment = ProcessInfo.processInfo.environment
+        let smokeDiagnosticsSink = HotkeySmokeDiagnosticsFileSink(environment: environment)
+        let presenter = StatusPresenter(smokeDiagnosticsSink: smokeDiagnosticsSink)
         _statusPresenter = StateObject(wrappedValue: presenter)
 
         let cleanupService = CleanupService(gateway: SystemPasteboardGateway())
@@ -26,13 +29,14 @@ struct ClipPolishApp: App {
             hotkeyService: hotkeyService
         )
 
-        let permissionService = AutomationPermissionService()
+        let permissionService = AutomationPermissionService(environment: environment)
         let pastePoster = CoreGraphicsPasteEventPoster()
         let executionCoordinator = HotkeyExecutionCoordinator(
             cleanupService: cleanupService,
             permissionService: permissionService,
             pastePoster: pastePoster,
             statusPresenter: presenter,
+            smokeDiagnosticsSink: smokeDiagnosticsSink,
             isHotkeyEnabledProvider: {
                 settingsCoordinator.currentSettings().isEnabled
             }

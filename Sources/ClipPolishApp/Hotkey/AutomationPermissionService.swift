@@ -14,11 +14,30 @@ extension AutomationPermissionServing {
 }
 
 struct AutomationPermissionService: AutomationPermissionServing {
+    private enum SmokePermissionMode {
+        case live
+        case deny
+    }
+
+    private let smokePermissionMode: SmokePermissionMode
+
+    init(environment: [String: String] = ProcessInfo.processInfo.environment) {
+        let smokeEnabled = environment["CLIPPOLISH_RUN_HOTKEY_E2E"] == "1"
+        let requestedMode = environment["CLIPPOLISH_SMOKE_PERMISSION_MODE"]?.lowercased()
+        smokePermissionMode = smokeEnabled && requestedMode == "deny" ? .deny : .live
+    }
+
     func preflightPostEventAccess() -> Bool {
-        CGPreflightPostEventAccess()
+        if smokePermissionMode == .deny {
+            return false
+        }
+        return CGPreflightPostEventAccess()
     }
 
     func requestPostEventAccess() -> Bool {
-        CGRequestPostEventAccess()
+        if smokePermissionMode == .deny {
+            return false
+        }
+        return CGRequestPostEventAccess()
     }
 }
