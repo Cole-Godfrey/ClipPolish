@@ -120,6 +120,7 @@ private final class MockClipboardGateway: ClipboardGateway, @unchecked Sendable 
     let readResult: Result<String, Error>
     let writeResult: Result<Void, Error>
 
+    private(set) var payloadTypeCallCount: Int = 0
     private(set) var readCallCount: Int = 0
     private(set) var writeCallCount: Int = 0
     private(set) var lastWrittenText: String?
@@ -136,7 +137,8 @@ private final class MockClipboardGateway: ClipboardGateway, @unchecked Sendable 
     }
 
     func currentPayloadType() -> ClipboardPayloadType {
-        payloadType
+        payloadTypeCallCount += 1
+        return payloadType
     }
 
     func readPlainText() throws -> String {
