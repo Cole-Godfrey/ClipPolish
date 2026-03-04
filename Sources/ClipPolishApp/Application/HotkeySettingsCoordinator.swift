@@ -79,12 +79,24 @@ final class HotkeySettingsCoordinator {
 
             return .accepted
         case .blockedConflict(let suggestions):
+            let preferences = store.load()
+            hotkeyService.apply(
+                isEnabled: preferences.isEnabled,
+                shortcut: preferences.shortcut
+            )
+
             if suggestions.isEmpty {
                 return .blockedConflict(suggestions: Self.defaultConflictSuggestions)
             }
 
             return .blockedConflict(suggestions: suggestions)
         case .invalidShortcut:
+            let preferences = store.load()
+            hotkeyService.apply(
+                isEnabled: preferences.isEnabled,
+                shortcut: preferences.shortcut
+            )
+
             return .invalidShortcut
         }
     }
