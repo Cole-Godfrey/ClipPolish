@@ -24,6 +24,7 @@ bash scripts/install-app.sh
 3. Launch `ClipPolish.app` from `~/Applications`.
 4. Confirm the menu bar icon appears.
 5. In the menu bar app, enable `Enable Global Hotkey` (default shortcut: `Command` + `Shift` + `Option` + `V`).
+6. Enable Accessibility permission when prompted, then click `Restart ClipPolish` from the menu to reload permission state before testing the hotkey.
 
 Default install location: `~/Applications/ClipPolish.app`
 
@@ -42,16 +43,18 @@ bash scripts/install-app.sh debug --no-run
 Hotkey clean-and-paste requires macOS Accessibility permission. Without it, the global hotkey cannot post the paste event.
 
 ClipPolish helps with setup:
+- On launch, ClipPolish checks Accessibility permission and prompts if it is still missing.
 - If permission is still missing, ClipPolish shows in-app guidance.
 - You can use `Request Accessibility Permission`.
 - You can use `Open Accessibility Settings`.
+- You can use `Restart ClipPolish` after enabling permission so the app reloads permission state.
 
 Complete these steps:
 
 1. Open `System Settings -> Privacy & Security -> Accessibility`.
 2. Enable `ClipPolish`.
 3. If prompted, authenticate and confirm.
-4. Quit and re-open ClipPolish so macOS reloads the new permission state.
+4. In the ClipPolish menu, click `Restart ClipPolish` so permission state is reloaded.
 5. Return to the target app and press the ClipPolish hotkey again.
 
 If `ClipPolish` is not listed in Accessibility:
@@ -73,7 +76,7 @@ tccutil reset Accessibility com.clippolish.app
 3. Re-open `~/Applications/ClipPolish.app`.
 4. Click `Request Accessibility Permission` in the ClipPolish menu.
 5. Re-enable ClipPolish in Accessibility if prompted.
-6. Quit and re-open ClipPolish again, then test the hotkey.
+6. Click `Restart ClipPolish`, then test the hotkey.
 
 Hotkey verification checklist:
 
@@ -96,7 +99,9 @@ Implemented:
 - Deterministic conflict guidance when a requested hotkey is blocked
 - Invalid/conflicting shortcut updates preserve the persisted active shortcut
 - Hotkey-triggered Accessibility request flow when permission is missing
+- Startup Accessibility permission preflight and prompt flow
 - Persistent permission guidance with manual steps and `Open Accessibility Settings` action
+- Menu action: `Restart ClipPolish` to reload permission state
 - Leading/trailing whitespace and newline trim
 - Removal of `U+FEFF`, `U+200B`, `U+2060`, and `U+00AD`
 - Mixed-format clipboard payload handling (plain text + rich text metadata)
