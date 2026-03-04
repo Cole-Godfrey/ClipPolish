@@ -7,9 +7,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Production hotkey conflict detection for system-reserved shortcuts and app-menu collisions, with deterministic blocked-conflict suggestions.
+- Core baseline invariant tests replacing placeholder scaffolding, including removable-scalar contract and non-text no-op assertions.
+- Process-level hotkey smoke harness (`scripts/verify-hotkey-smoke.sh`) with relaunch, permission-denied, and mixed-payload scenarios plus machine-readable `PASS`/`SKIP`/`FAIL` output.
+- New Makefile verification targets: `verify-phase6-hotkey-conflict`, `verify-phase7-hotkey-e2e`, and `verify-phase7-hotkey-smoke`.
+
 ### Changed
 - Accessibility setup docs and in-app permission guidance now explicitly require quitting and re-opening ClipPolish after enabling Accessibility before hotkey clean-and-paste works.
 - Project version references and bundle metadata now reflect `1.0.1`.
+- Hotkey shortcut edit handling now preserves persisted active shortcut state when updates are invalid or conflict with reserved/menu shortcuts.
+- Default deterministic project verification now runs through `make verify-phase7-hotkey-e2e`, with smoke verification kept as explicit opt-in.
+- Contributor workflows (`CONTRIBUTING.md`, `QUALITY_GATES.md`, `RELEASE.md`, and PR template) now align to phase-7 verification commands and smoke-run policy.
 
 ## [1.0.1] - 2026-03-03
 

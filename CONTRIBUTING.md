@@ -22,7 +22,13 @@ bash scripts/install-dev-app.sh
 5. Run safety verification before opening a PR:
 
 ```bash
-make verify-phase6-hotkey-conflict
+make verify-phase7-hotkey-e2e
+```
+
+Optional host-dependent smoke verification:
+
+```bash
+CLIPPOLISH_RUN_HOTKEY_E2E=1 make verify-phase7-hotkey-smoke
 ```
 
 ## Pull Request Guidelines

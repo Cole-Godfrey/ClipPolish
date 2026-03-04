@@ -9,8 +9,16 @@ This document describes the release process for ClipPolish.
 
 ```bash
 swift test
-make verify-phase3-hotkey-execution
+make verify-phase7-hotkey-e2e
 ```
+
+Optional process smoke verification (host-dependent):
+
+```bash
+CLIPPOLISH_RUN_HOTKEY_E2E=1 make verify-phase7-hotkey-smoke
+```
+
+`SKIP:` output from the smoke harness is acceptable when the release environment lacks required GUI/session capabilities.
 
 3. Update release metadata:
 - `ClipPolishApp/Info.plist` (`CFBundleShortVersionString`, `CFBundleVersion`)

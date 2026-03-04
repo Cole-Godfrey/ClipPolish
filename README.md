@@ -78,12 +78,16 @@ Implemented:
 - Menu bar action: `Clean Clipboard Text`
 - Global hotkey toggle and recorder (default: `Command` + `Shift` + `Option` + `V`)
 - Hotkey clean-and-paste flow (sanitize clipboard, then post paste event)
+- Hotkey shortcut validation for system-reserved and app-menu conflicts
+- Deterministic conflict guidance when a requested hotkey is blocked
+- Invalid/conflicting shortcut updates preserve the persisted active shortcut
 - Hotkey-triggered Accessibility request flow when permission is missing
 - Persistent permission guidance with manual steps and `Open Accessibility Settings` action
 - Leading/trailing whitespace and newline trim
 - Removal of `U+FEFF`, `U+200B`, `U+2060`, and `U+00AD`
 - Mixed-format clipboard payload handling (plain text + rich text metadata)
 - Non-text clipboard payloads are left untouched
+- Optional process-level smoke verification harness for relaunch/permission/mixed-payload paths
 - Local-only processing (no network calls, no clipboard history persistence)
 
 ## Development Setup
