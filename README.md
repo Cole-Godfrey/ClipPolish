@@ -1,11 +1,6 @@
 # ClipPolish
 
-   ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.   
-   ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.   
 ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.
-ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.
-ClipPolish is a lightweight macOS menu bar utility that cleans copied plain text before paste.
-
 
 The current behavior is intentionally conservative: trim only leading/trailing whitespace and remove a small denylist of invisible Unicode scalars that commonly break pastes or tooling.
 
