@@ -1,6 +1,9 @@
 # Local planning workspace
 .planning/
 
+# Marketing content
+marketing/
+
 # SwiftPM build output
 .build/
 dist/

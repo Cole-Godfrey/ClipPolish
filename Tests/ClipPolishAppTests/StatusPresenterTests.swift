@@ -12,7 +12,7 @@ struct StatusPresenterTests {
 
         #expect(presenter.currentMessage == .cleaned(totalCharactersRemoved: 2))
 
-        try? await Task.sleep(nanoseconds: 30_000_000)
+        await waitForAutoDismiss(of: presenter)
 
         #expect(presenter.currentMessage == nil)
     }
@@ -35,5 +35,18 @@ struct StatusPresenterTests {
         try? await Task.sleep(nanoseconds: 30_000_000)
 
         #expect(presenter.currentMessage == .automationPermissionRequestDenied)
+    }
+
+    private func waitForAutoDismiss(
+        of presenter: StatusPresenter,
+        timeoutNanoseconds: UInt64 = 1_000_000_000,
+        pollIntervalNanoseconds: UInt64 = 5_000_000
+    ) async {
+        let timeoutPoint = DispatchTime.now().uptimeNanoseconds &+ timeoutNanoseconds
+
+        while presenter.currentMessage != nil && DispatchTime.now().uptimeNanoseconds < timeoutPoint {
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: pollIntervalNanoseconds)
+        }
     }
 }
